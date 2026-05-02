@@ -1,0 +1,27 @@
+.DS_Store
+
+# Local environment and generated config
+.env
+.env.*
+!.env.example
+config/config.php
+
+# Dependencies are installed with Composer
+/vendor/
+
+# Runtime/generated files
+/storage/backups/*
+!/storage/backups/.gitkeep
+/storage/cache/*
+!/storage/cache/.gitkeep
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/reports/*
+!/storage/reports/.gitkeep
+/storage/restores/*
+!/storage/restores/.gitkeep
+
+# Generated archives and exports
+*.zip
+*.pdf
+*.log

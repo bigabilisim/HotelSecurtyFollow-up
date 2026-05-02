@@ -1,0 +1,18 @@
+Options -Indexes
+DirectoryIndex index.php index.html
+
+RewriteEngine On
+
+RewriteRule ^(app|bin|config|database|docs|storage|tools)(/|$) - [F,L]
+
+RewriteRule ^assets/(.*)$ public/assets/$1 [L]
+RewriteRule ^icons/(.*)$ public/icons/$1 [L]
+RewriteRule ^service-worker\.js$ public/service-worker.js [L]
+RewriteRule ^manifest\.webmanifest$ public/manifest.webmanifest [L]
+RewriteRule ^offline\.html$ public/offline.html [L]
+
+RewriteRule ^$ public/index.php [L]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ public/index.php [L,QSA]
