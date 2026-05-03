@@ -160,7 +160,7 @@ final class MailSender implements NotificationSenderInterface
 
     private function mimeBody(array $notification): array
     {
-        $contentType = ($this->hasActions($notification) ? 'text/html' : 'text/plain') . '; charset=UTF-8';
+        $contentType = ($this->hasActions($notification) || $this->isHtmlMessage($notification) ? 'text/html' : 'text/plain') . '; charset=UTF-8';
         $body = $this->body($notification);
 
         if (!$this->hasAttachment($notification)) {
@@ -202,7 +202,9 @@ final class MailSender implements NotificationSenderInterface
             return (string) $notification['message'];
         }
 
-        $message = nl2br(htmlspecialchars((string) $notification['message'], ENT_QUOTES, 'UTF-8'));
+        $message = $this->isHtmlMessage($notification)
+            ? (string) $notification['message']
+            : nl2br(htmlspecialchars((string) $notification['message'], ENT_QUOTES, 'UTF-8'));
         $yesUrl = htmlspecialchars((string) $notification['action_yes_url'], ENT_QUOTES, 'UTF-8');
         $noUrl = htmlspecialchars((string) $notification['action_no_url'], ENT_QUOTES, 'UTF-8');
 
@@ -221,6 +223,13 @@ final class MailSender implements NotificationSenderInterface
             && trim((string) ($notification['action_no_url'] ?? '')) !== '';
     }
 
+    private function isHtmlMessage(array $notification): bool
+    {
+        $message = trim((string) ($notification['message'] ?? ''));
+
+        return $message !== '' && $message !== strip_tags($message);
+    }
+
     private function hasAttachment(array $notification): bool
     {
         $path = trim((string) ($notification['attachment_path'] ?? ''));
@@ -234,6 +243,8 @@ final class MailSender implements NotificationSenderInterface
             'pdf' => 'application/pdf',
             'zip' => 'application/zip',
             'csv' => 'text/csv',
+            'html' => 'text/html',
+            'htm' => 'text/html',
             default => 'application/octet-stream',
         };
     }

@@ -71,6 +71,20 @@ final class UserSuggestion
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function unfinishedCount(): int
+    {
+        $this->ensureTable();
+
+        $stmt = Database::connection()->query(
+            'SELECT COUNT(*)
+             FROM user_suggestions
+             WHERE deleted_at IS NULL
+               AND status IN ("new", "reviewing")'
+        );
+
+        return (int) $stmt->fetchColumn();
+    }
+
     public function create(array $data, array $user): int
     {
         $this->ensureTable();

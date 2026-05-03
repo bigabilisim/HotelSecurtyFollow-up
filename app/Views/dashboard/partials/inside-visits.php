@@ -10,11 +10,11 @@ $maskName = $maskName ?? static fn (?string $value): string => trim((string) $va
 ?>
 <div class="visit-table">
   <div class="visit-head">
-    <span>Kişi</span>
-    <span>Departman</span>
-    <span>Süre</span>
-    <span>Durum</span>
-    <span>İşlem</span>
+    <span data-col="person">Kişi</span>
+    <span data-col="department">Departman</span>
+    <span data-col="duration">Süre</span>
+    <span data-col="status">Durum</span>
+    <span data-col="actions">İşlem</span>
   </div>
 
   <?php if (!$insideVisits): ?>
@@ -35,7 +35,7 @@ $maskName = $maskName ?? static fn (?string $value): string => trim((string) $va
       data-entry-at="<?= e($entryAt ? date(DATE_ATOM, $entryAt) : '') ?>"
       data-limit-minutes="<?= e($limit ?? '') ?>"
     >
-      <div class="person-cell">
+      <div class="person-cell" data-col="person" data-col-label="Kişi">
         <span class="category-badge" style="background: <?= e($visit['category_color']) ?>">
           <?= e(substr($visit['category_name'], 0, 3)) ?>
         </span>
@@ -44,8 +44,8 @@ $maskName = $maskName ?? static fn (?string $value): string => trim((string) $va
           <small><?= e(trim(($visit['company'] ?? '') . ' ' . ($visit['vehicle_plate'] ? '| ' . $visit['vehicle_plate'] : ''))) ?></small>
         </div>
       </div>
-      <span><?= e($visit['department_name'] ?? '-') ?></span>
-      <span class="countdown-cell">
+      <span data-col="department" data-col-label="Departman"><?= e($visit['department_name'] ?? '-') ?></span>
+      <span class="countdown-cell" data-col="duration" data-col-label="Süre">
         <strong data-countdown-label>
           <?= $limit ? e((string) $remaining) . ' dk kaldı' : e($elapsed) . ' dk' ?>
         </strong>
@@ -56,8 +56,8 @@ $maskName = $maskName ?? static fn (?string $value): string => trim((string) $va
           </span>
         <?php endif; ?>
       </span>
-      <span class="state-chip <?= e($status[1]) ?>"><?= e($status[0]) ?></span>
-      <span class="visit-actions">
+      <span class="state-chip <?= e($status[1]) ?>" data-col="status" data-col-label="Durum"><?= e($status[0]) ?></span>
+      <span class="visit-actions" data-col="actions" data-col-label="İşlem">
         <button class="ghost-button small-action" type="button" data-detail-toggle aria-expanded="false">Detay</button>
         <button class="primary-action small-action" type="button" data-edit-toggle aria-expanded="false">Düzenle</button>
         <form method="post" action="<?= e(route('/visits/exit')) ?>" onsubmit="return confirm('Bu ziyaretçi için çıkış kaydı oluşturulsun mu?');">

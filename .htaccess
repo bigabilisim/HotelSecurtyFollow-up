@@ -4,6 +4,7 @@ DirectoryIndex index.php index.html
 RewriteEngine On
 
 RewriteRule ^(app|bin|config|database|docs|storage|tools)(/|$) - [F,L]
+RewriteRule ^public/company-permission-panel\.html$ - [F,L]
 
 RewriteRule ^assets/(.*)$ public/assets/$1 [L]
 RewriteRule ^icons/(.*)$ public/icons/$1 [L]

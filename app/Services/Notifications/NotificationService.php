@@ -644,9 +644,12 @@ final class NotificationService
             'message' => $defaultMessage,
         ];
 
+        $body = $this->renderTemplate($template['body'], $context, $values);
+        $css = trim($this->renderTemplate((string) ($template['css'] ?? ''), $context, $values));
+
         return [
             'subject' => $this->renderTemplate($template['subject'], $context, $values),
-            'message' => $this->renderTemplate($template['body'], $context, $values),
+            'message' => $css !== '' ? '<style>' . $css . '</style>' . $body : $body,
         ];
     }
 

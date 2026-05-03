@@ -118,18 +118,26 @@ final class VisitRecord
 
         $search = trim((string) ($filters['search'] ?? ''));
         if ($search !== '') {
-            $where[] = '(
-                full_name LIKE :search
-                OR phone LIKE :search
-                OR company LIKE :search
-                OR vehicle_plate LIKE :search
-                OR host_name LIKE :search
-                OR purpose LIKE :search
-                OR entry_note LIKE :search
-                OR exit_note LIKE :search
-                OR movement_note LIKE :search
-            )';
-            $params['search'] = '%' . $search . '%';
+            $searchColumns = [
+                'full_name',
+                'phone',
+                'company',
+                'vehicle_plate',
+                'host_name',
+                'purpose',
+                'entry_note',
+                'exit_note',
+                'movement_note',
+            ];
+            $searchParts = [];
+
+            foreach ($searchColumns as $index => $column) {
+                $param = 'search_' . $index;
+                $searchParts[] = $column . ' LIKE :' . $param;
+                $params[$param] = '%' . $search . '%';
+            }
+
+            $where[] = '(' . implode(' OR ', $searchParts) . ')';
         }
 
         return [implode(' AND ', $where), $params];

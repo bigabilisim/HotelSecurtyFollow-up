@@ -16,11 +16,21 @@ Bu bölümde giriş ve çıkış olayları için çalışan bildirim altyapısı
 | --- | --- | --- |
 | Mail | `MailSender` | Panelden `php_mail` veya `smtp`; SMTP için host, port, şifreleme, kullanıcı, şifre, gönderen mail/ad |
 | Telegram | `TelegramSender` | `configured`, `bot_token`, isteğe bağlı `parse_mode` |
-| WhatsApp | `WhatsAppSender` | `configured`, `endpoint`, `access_token`; Meta Cloud için `api_version` ve `phone_number_id` |
+| WhatsApp | `WhatsAppSender` | Sihirbazla `provider`, `api_version`, `business_id`, `phone_number_id`, `access_token`; Meta Cloud endpoint otomatik üretilir |
 
 Kanal ayarı tamamlanmadıysa kayıt `skipped` durumuna alınır. Böylece sistem giriş/çıkış akışını bozmaz, eksik yapılandırma da loglarda görünür.
 
 Mail kanalı, Yönetim > Mail Şablonları ekranındaki konu ve gövde şablonlarını kullanır. Ekran tıklanabilir değişkenler ve canlı ön izleme ile temel kullanıcıya göre sadeleştirilmiştir. Bu ekran yalnızca mail metinlerini değiştirir; Telegram ve WhatsApp için bildirim kuralındaki mesaj şablonu geçerlidir.
+
+## WhatsApp Kurulum Sihirbazı
+
+Yönetim > Kanal Ayarları ekranında WhatsApp kartında kurulum sihirbazı bulunur. Meta Developer veya WhatsApp Manager üzerinden alınan kalıcı `Access Token` ve `WhatsApp Business Account ID` girildiğinde `Entegrasyonu Tamamla` butonu Meta Graph API'ye bağlanır, bağlı telefon numaralarını okur, uygun `Phone Number ID` değerini otomatik seçer ve kanala kaydeder. `Phone Number ID` zaten biliniyorsa aynı buton numarayı doğrudan Meta üzerinde doğrular.
+
+- `Entegrasyonu Tamamla` butonu kanalı aktif eder, Meta sonucunu kaydeder ve doğrulanmış ad, gönderici numara, kalite bilgisi gibi detayları ekrana yazar.
+- `Elle Kaydet ve Aktifleştir` butonu Phone Number ID değeri bilinen kurulumlarda ayarları manuel tamamlar.
+- `Bağlantıyı Doğrula` butonu Meta Graph API üzerinden telefon numarası bilgisini kontrol eder.
+- `Test Gönder` butonu gerçek WhatsApp alıcısına örnek mesaj gönderir.
+- Test ve canlı alıcı numaraları `05xx`, `+90 5xx` veya `905xx` yazılsa da gönderim öncesi Meta formatına çevrilir.
 
 ## Kuyruk İşleyici
 
@@ -45,6 +55,8 @@ Kayıtlar ekranından veya PDF formatlı rapor planından oluşturulan PDF dosya
 V1.7 ile telefon bildirimi yetkisi olan kullanıcılar gerçek Web Push aboneliği alabilir. Tarayıcı destekliyorsa kullanıcı bildirim izni verdiğinde cihaz aboneliği `push_subscriptions` tablosuna kaydedilir. VAPID public/private anahtarları ilk kullanımda otomatik üretilir ve `app_settings` içinde saklanır.
 
 Kullanıcı kartında giriş ve çıkış olayları ayrı ayrı seçilebilir. Yeni giriş veya çıkış kaydı oluştuğunda sistem önce Web Push endpointlerine bildirim göndermeyi dener. Desteklemeyen cihazlarda veya abonelik alınmamış kullanıcılarda eski açık-panel polling bildirimi yedek olarak devam eder.
+
+iPhone ve iPad tarafında Safari Web Push, Apple'ın PWA davranışı nedeniyle normal Safari sekmesinden değil ana ekrana eklenmiş web uygulamasından çalışır. Kullanıcı uygulamayı Safari > Paylaş > Ana Ekrana Ekle ile kurmadan açarsa sistem uyarı gösterir; uygulama ana ekran ikonundan açıldıktan sonra bildirim izni ve Web Push aboneliği alınır.
 
 ## Süre Aşımı İşleyici
 

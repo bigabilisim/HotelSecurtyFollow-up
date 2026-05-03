@@ -1,0 +1,1742 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Firma Bazlı Yetkilendirme Paneli</title>
+    <style>
+      :root {
+        --bg: #f5f7f4;
+        --surface: #ffffff;
+        --surface-soft: #eef3ed;
+        --ink: #17201d;
+        --muted: #64706c;
+        --line: #d8dfd7;
+        --brand: #0f766e;
+        --brand-dark: #0b5d57;
+        --blue: #285f91;
+        --amber: #b66711;
+        --red: #b3261e;
+        --green: #16803a;
+        --shadow: 0 18px 42px rgba(24, 33, 31, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        margin: 0;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      .app {
+        display: grid;
+        grid-template-columns: 252px minmax(0, 1fr);
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        background: #1f2f2b;
+        color: #fff;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 20px;
+        padding: 18px;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+      }
+
+      .brand-mark {
+        background: #f7fff8;
+        border-radius: 8px;
+        color: var(--brand-dark);
+        display: grid;
+        font-weight: 900;
+        height: 44px;
+        place-items: center;
+        width: 44px;
+      }
+
+      .brand small,
+      .eyebrow {
+        color: var(--muted);
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 850;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .brand small {
+        color: rgba(255, 255, 255, 0.66);
+      }
+
+      .brand strong {
+        display: block;
+        font-size: 1.02rem;
+        line-height: 1.12;
+      }
+
+      .nav {
+        display: grid;
+        gap: 8px;
+      }
+
+      .nav button,
+      .sidebar-foot {
+        background: rgba(255, 255, 255, 0.09);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 8px;
+        color: #fff;
+      }
+
+      .nav button {
+        min-height: 42px;
+        padding: 10px 12px;
+        text-align: left;
+      }
+
+      .nav button.active {
+        background: #f7fff8;
+        color: var(--brand-dark);
+        font-weight: 900;
+      }
+
+      .sidebar-foot {
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 0.82rem;
+        line-height: 1.45;
+        padding: 12px;
+      }
+
+      .main {
+        display: grid;
+        gap: 18px;
+        min-width: 0;
+        padding: 18px;
+      }
+
+      .topbar {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        display: grid;
+        gap: 14px;
+        grid-template-columns: minmax(0, 1fr) minmax(260px, 420px) auto;
+        padding: 14px;
+        position: sticky;
+        top: 12px;
+        z-index: 50;
+      }
+
+      .page-title h1 {
+        font-size: 1.3rem;
+        margin: 2px 0 0;
+      }
+
+      .search {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+      }
+
+      input,
+      select,
+      textarea {
+        background: #fbfcfa;
+        border: 1px solid #cbd4ca;
+        border-radius: 7px;
+        color: var(--ink);
+        min-height: 40px;
+        padding: 9px 10px;
+        width: 100%;
+      }
+
+      textarea {
+        min-height: 88px;
+        resize: vertical;
+      }
+
+      .primary,
+      .secondary,
+      .danger,
+      .ghost {
+        border: 1px solid transparent;
+        border-radius: 7px;
+        font-weight: 850;
+        min-height: 40px;
+        padding: 9px 12px;
+      }
+
+      .primary {
+        background: var(--brand);
+        color: #fff;
+      }
+
+      .secondary {
+        background: #e7f0ed;
+        border-color: #c9dbd5;
+        color: var(--brand-dark);
+      }
+
+      .danger {
+        background: #fce7e5;
+        border-color: #efb8b2;
+        color: var(--red);
+      }
+
+      .ghost {
+        background: transparent;
+        border-color: var(--line);
+        color: var(--ink);
+      }
+
+      .company-switcher {
+        position: relative;
+      }
+
+      .company-button {
+        align-items: center;
+        background: #21302b;
+        border: 0;
+        border-radius: 8px;
+        color: #fff;
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        min-height: 48px;
+        padding: 8px 11px;
+        width: 100%;
+      }
+
+      .company-button strong,
+      .company-button small {
+        display: block;
+        text-align: left;
+      }
+
+      .company-button small {
+        color: rgba(255, 255, 255, 0.66);
+        font-size: 0.72rem;
+        font-weight: 780;
+      }
+
+      .company-menu {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        display: grid;
+        gap: 10px;
+        margin-top: 8px;
+        padding: 10px;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        width: min(420px, calc(100vw - 36px));
+        z-index: 80;
+      }
+
+      .company-menu[hidden] {
+        display: none;
+      }
+
+      .company-list {
+        display: grid;
+        gap: 6px;
+        max-height: 220px;
+        overflow-y: auto;
+      }
+
+      .company-item {
+        align-items: center;
+        background: #fbfcfa;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        display: grid;
+        gap: 8px;
+        grid-template-columns: minmax(0, 1fr) auto;
+        padding: 9px;
+        text-align: left;
+      }
+
+      .company-item.active {
+        border-color: var(--brand);
+        box-shadow: inset 3px 0 0 var(--brand);
+      }
+
+      .company-form {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+
+      .content {
+        display: grid;
+        gap: 16px;
+      }
+
+      .page {
+        display: none;
+      }
+
+      .page.active {
+        display: grid;
+        gap: 16px;
+      }
+
+      .metrics {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .metric {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-left: 4px solid var(--brand);
+        border-radius: 8px;
+        min-height: 118px;
+        padding: 14px;
+      }
+
+      .metric.clickable {
+        text-align: left;
+        width: 100%;
+      }
+
+      .metric.warning {
+        border-left-color: var(--amber);
+      }
+
+      .metric.danger-line {
+        border-left-color: var(--red);
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 2rem;
+        margin-top: 4px;
+      }
+
+      .metric small {
+        color: var(--muted);
+        display: block;
+        font-weight: 720;
+        margin-top: 4px;
+      }
+
+      .grid-two {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+      }
+
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        display: grid;
+        gap: 12px;
+        padding: 14px;
+      }
+
+      .panel-head {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+      }
+
+      .panel-head h2,
+      .panel h2 {
+        font-size: 1.06rem;
+        margin: 0;
+      }
+
+      .table {
+        display: grid;
+        gap: 8px;
+      }
+
+      .table-head,
+      .table-row {
+        display: grid;
+        gap: 10px;
+      }
+
+      .table-head {
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .table-row {
+        background: #fbfcfa;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px;
+      }
+
+      .users-table .table-head,
+      .users-table .table-row {
+        grid-template-columns: minmax(150px, 1fr) minmax(180px, 1fr) 120px 130px 96px 108px;
+      }
+
+      .roles-table .table-head,
+      .roles-table .table-row {
+        grid-template-columns: minmax(160px, 1fr) 130px minmax(180px, 1.4fr) 120px;
+      }
+
+      .approval-table .table-head,
+      .approval-table .table-row,
+      .logs-table .table-head,
+      .logs-table .table-row {
+        grid-template-columns: minmax(170px, 1fr) 130px minmax(220px, 1.4fr) 190px;
+      }
+
+      .status {
+        align-items: center;
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 0.76rem;
+        font-weight: 900;
+        justify-content: center;
+        min-height: 28px;
+        padding: 5px 9px;
+        width: max-content;
+      }
+
+      .status.ok {
+        background: #e2f4e7;
+        color: var(--green);
+      }
+
+      .status.muted {
+        background: #eef2e8;
+        color: var(--muted);
+      }
+
+      .status.warning {
+        background: #fff1dc;
+        color: var(--amber);
+      }
+
+      .status.danger {
+        background: #fde2df;
+        color: var(--red);
+      }
+
+      .actions {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .mini {
+        border-radius: 6px;
+        font-size: 0.78rem;
+        min-height: 32px;
+        padding: 6px 9px;
+      }
+
+      .permission-toolbar {
+        align-items: end;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: minmax(180px, 240px) minmax(180px, 240px) minmax(0, 1fr);
+      }
+
+      .permission-matrix {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .matrix-row {
+        align-items: center;
+        display: grid;
+        gap: 8px;
+        grid-template-columns: minmax(130px, 1.2fr) repeat(6, minmax(82px, 0.55fr));
+        padding: 10px;
+      }
+
+      .matrix-row:nth-child(even) {
+        background: #fbfcfa;
+      }
+
+      .matrix-head {
+        background: #edf3ee;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .switch {
+        align-items: center;
+        display: inline-flex;
+        gap: 8px;
+      }
+
+      .switch input {
+        height: 1px;
+        opacity: 0;
+        position: absolute;
+        width: 1px;
+      }
+
+      .switch i {
+        background: #c8d3ca;
+        border-radius: 999px;
+        display: inline-block;
+        height: 24px;
+        position: relative;
+        transition: 0.18s ease;
+        width: 44px;
+      }
+
+      .switch i::after {
+        background: #fff;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(24, 33, 31, 0.24);
+        content: "";
+        height: 18px;
+        left: 3px;
+        position: absolute;
+        top: 3px;
+        transition: 0.18s ease;
+        width: 18px;
+      }
+
+      .switch input:checked + i {
+        background: var(--brand);
+      }
+
+      .switch input:checked + i::after {
+        transform: translateX(20px);
+      }
+
+      .level-list,
+      .audit-list,
+      .settings-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .level-item,
+      .audit-item,
+      .setting-item {
+        background: #fbfcfa;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        display: grid;
+        gap: 5px;
+        padding: 11px;
+      }
+
+      .setting-item {
+        align-items: center;
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+
+      .empty,
+      .notice {
+        background: #fff8e8;
+        border: 1px solid #efd7a8;
+        border-radius: 8px;
+        color: #7a4a0a;
+        font-weight: 760;
+        padding: 12px;
+      }
+
+      .modal-backdrop,
+      .toast {
+        position: fixed;
+        z-index: 1000;
+      }
+
+      .modal-backdrop {
+        align-items: center;
+        background: rgba(18, 24, 22, 0.58);
+        display: flex;
+        inset: 0;
+        justify-content: center;
+        padding: 18px;
+      }
+
+      .modal-backdrop[hidden],
+      .toast[hidden] {
+        display: none;
+      }
+
+      .modal {
+        background: var(--surface);
+        border-radius: 8px;
+        box-shadow: 0 28px 72px rgba(18, 24, 22, 0.32);
+        display: grid;
+        gap: 14px;
+        max-height: calc(100vh - 36px);
+        overflow-y: auto;
+        padding: 18px;
+        width: min(620px, 100%);
+      }
+
+      .modal h2 {
+        margin: 0;
+      }
+
+      .form-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .field-full {
+        grid-column: 1 / -1;
+      }
+
+      label {
+        color: var(--ink);
+        display: grid;
+        font-size: 0.82rem;
+        font-weight: 820;
+        gap: 6px;
+      }
+
+      .modal-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .toast {
+        background: #21302b;
+        border-radius: 8px;
+        bottom: 18px;
+        box-shadow: var(--shadow);
+        color: #fff;
+        display: grid;
+        gap: 6px;
+        max-width: min(460px, calc(100vw - 36px));
+        padding: 12px;
+        right: 18px;
+      }
+
+      .toast button {
+        justify-self: start;
+      }
+
+      @media (max-width: 1120px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          grid-template-rows: auto auto;
+        }
+
+        .sidebar-foot {
+          display: none;
+        }
+
+        .nav {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .topbar,
+        .grid-two,
+        .metrics {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 820px) {
+        .main,
+        .sidebar {
+          padding: 12px;
+        }
+
+        .topbar {
+          position: static;
+        }
+
+        .search,
+        .company-form,
+        .permission-toolbar,
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .nav {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .table-head {
+          display: none;
+        }
+
+        .users-table .table-row,
+        .roles-table .table-row,
+        .approval-table .table-row,
+        .logs-table .table-row {
+          grid-template-columns: 1fr;
+        }
+
+        .table-row > *::before {
+          color: var(--muted);
+          content: attr(data-label);
+          display: block;
+          font-size: 0.68rem;
+          font-weight: 900;
+          letter-spacing: 0.05em;
+          margin-bottom: 2px;
+          text-transform: uppercase;
+        }
+
+        .permission-matrix {
+          overflow-x: auto;
+        }
+
+        .matrix-row {
+          min-width: 720px;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .nav {
+          grid-template-columns: 1fr;
+        }
+
+        .panel-head {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .actions,
+        .modal-actions {
+          display: grid;
+          grid-template-columns: 1fr;
+        }
+
+        .actions button,
+        .modal-actions button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">FY</div>
+          <div>
+            <small>Sektör bağımsız</small>
+            <strong>Firma Yetkilendirme</strong>
+          </div>
+        </div>
+
+        <nav class="nav" aria-label="Ana menü">
+          <button class="active" data-page-link="dashboard" type="button">Dashboard</button>
+          <button data-page-link="users" type="button">Kullanıcılar</button>
+          <button data-page-link="roles" type="button">Roller ve İzinler</button>
+          <button data-page-link="approvals" type="button">Onaylar</button>
+          <button data-page-link="logs" type="button">Kritik Loglar</button>
+          <button data-page-link="audit" type="button">Denetim</button>
+          <button data-page-link="settings" type="button">Ayarlar</button>
+        </nav>
+
+        <div class="sidebar-foot">
+          Rol, kişi ve yetki seviyesi birlikte değerlendirilir. Riskli işlemler onay penceresiyle ilerler.
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="page-title">
+            <span class="eyebrow" data-company-sector>Firma</span>
+            <h1 data-current-page-title>Dashboard</h1>
+          </div>
+
+          <form class="search" data-search-form>
+            <input data-search-input placeholder="Kullanıcı, rol veya seviye ara">
+            <button class="secondary" type="submit">Ara</button>
+          </form>
+
+          <div class="company-switcher">
+            <button class="company-button" data-company-toggle type="button" aria-expanded="false">
+              <span>
+                <small>Aktif firma</small>
+                <strong data-current-company-name></strong>
+              </span>
+              <span aria-hidden="true">Seç</span>
+            </button>
+            <section class="company-menu" data-company-menu hidden>
+              <div class="company-list" data-company-list></div>
+              <form class="company-form" data-company-form>
+                <input data-company-name-input placeholder="Yeni firma adı">
+                <button class="primary" type="submit">Firma Ekle</button>
+              </form>
+              <button class="danger" data-delete-company type="button">Seçili Firmayı Sil</button>
+            </section>
+          </div>
+        </header>
+
+        <section class="content">
+          <section class="page active" data-page="dashboard">
+            <div class="metrics">
+              <article class="metric">
+                <span class="eyebrow">Aktif kullanıcı</span>
+                <strong data-metric="activeUsers">0</strong>
+                <small>Seçili firmadaki aktif hesaplar</small>
+              </article>
+              <article class="metric">
+                <span class="eyebrow">Yetki seviyesi</span>
+                <strong data-metric="fullAccess">0</strong>
+                <small>Seviye 4 tam yetkili kullanıcı</small>
+              </article>
+              <button class="metric clickable warning" data-page-link="approvals" type="button">
+                <span class="eyebrow">Bekleyen onay</span>
+                <strong data-metric="pendingApprovals">0</strong>
+                <small>Onaylar sayfasına git</small>
+              </button>
+              <button class="metric clickable danger-line" data-page-link="logs" type="button">
+                <span class="eyebrow">Kritik log</span>
+                <strong data-metric="criticalLogs">0</strong>
+                <small>Kritik loglara git</small>
+              </button>
+            </div>
+
+            <div class="grid-two">
+              <section class="panel">
+                <div class="panel-head">
+                  <div>
+                    <span class="eyebrow">Seviye dağılımı</span>
+                    <h2>Kullanıcı Yetki Seviyeleri</h2>
+                  </div>
+                </div>
+                <div class="level-list" data-level-summary></div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-head">
+                  <div>
+                    <span class="eyebrow">Son hareketler</span>
+                    <h2>Denetim Özeti</h2>
+                  </div>
+                </div>
+                <div class="audit-list" data-dashboard-audit></div>
+              </section>
+            </div>
+          </section>
+
+          <section class="page" data-page="users">
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow">Firma filtresi aktif</span>
+                  <h2>Kullanıcı Yönetimi</h2>
+                </div>
+                <button class="primary" data-open-user-modal type="button">Kullanıcı Ekle</button>
+              </div>
+              <div class="table users-table">
+                <div class="table-head">
+                  <span>Kullanıcı</span>
+                  <span>E-posta</span>
+                  <span>Rol</span>
+                  <span>Seviye</span>
+                  <span>Durum</span>
+                  <span>İşlem</span>
+                </div>
+                <div data-users-body></div>
+              </div>
+            </section>
+          </section>
+
+          <section class="page" data-page="roles">
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow">Rol ve seviye bazlı</span>
+                  <h2>Roller</h2>
+                </div>
+              </div>
+              <div class="table roles-table">
+                <div class="table-head">
+                  <span>Rol</span>
+                  <span>Varsayılan seviye</span>
+                  <span>Açıklama</span>
+                  <span>Kullanıcı</span>
+                </div>
+                <div data-roles-body></div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow">Her firma ve seviye için ayrı</span>
+                  <h2>İzin Matrisi</h2>
+                </div>
+              </div>
+              <div class="permission-toolbar">
+                <label>
+                  Firma
+                  <select data-matrix-company></select>
+                </label>
+                <label>
+                  Yetki seviyesi
+                  <select data-matrix-level></select>
+                </label>
+                <p class="notice">Switch değişiklikleri örnek veri üzerinde anlık kaydedilir ve denetim kaydı oluşturur.</p>
+              </div>
+              <div class="permission-matrix" data-permission-matrix></div>
+            </section>
+          </section>
+
+          <section class="page" data-page="approvals">
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow">Dinamik örnek akış</span>
+                  <h2>Bekleyen Onaylar</h2>
+                </div>
+              </div>
+              <div class="table approval-table">
+                <div class="table-head">
+                  <span>Talep</span>
+                  <span>Durum</span>
+                  <span>Açıklama</span>
+                  <span>İşlem</span>
+                </div>
+                <div data-approvals-body></div>
+              </div>
+            </section>
+          </section>
+
+          <section class="page" data-page="logs">
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow">Risk takibi</span>
+                  <h2>Kritik Loglar</h2>
+                </div>
+              </div>
+              <div class="table logs-table">
+                <div class="table-head">
+                  <span>Olay</span>
+                  <span>Seviye</span>
+                  <span>Detay</span>
+                  <span>İşlem</span>
+                </div>
+                <div data-logs-body></div>
+              </div>
+            </section>
+          </section>
+
+          <section class="page" data-page="audit">
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow">Denetim izi</span>
+                  <h2>Firma Denetim Kayıtları</h2>
+                </div>
+              </div>
+              <div class="audit-list" data-audit-body></div>
+            </section>
+          </section>
+
+          <section class="page" data-page="settings">
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow">Firma bazlı güvenlik</span>
+                  <h2>Ayarlar</h2>
+                </div>
+              </div>
+              <div class="settings-list" data-settings-body></div>
+            </section>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <section class="modal-backdrop" data-user-modal hidden>
+      <form class="modal" data-user-form>
+        <div>
+          <span class="eyebrow">Yeni kullanıcı</span>
+          <h2>Kullanıcı Ekle</h2>
+        </div>
+        <div class="form-grid">
+          <label>
+            Ad soyad
+            <input name="name" required placeholder="Örn. Ayşe Yılmaz">
+          </label>
+          <label>
+            E-posta
+            <input name="email" type="email" required placeholder="ornek@firma.com">
+          </label>
+          <label>
+            Firma
+            <select name="companyId" required></select>
+          </label>
+          <label>
+            Rol
+            <select name="roleId" required></select>
+          </label>
+          <label>
+            Yetki seviyesi
+            <select name="level" required></select>
+          </label>
+          <label>
+            Durum
+            <select name="status" required>
+              <option value="active">Aktif</option>
+              <option value="passive">Pasif</option>
+            </select>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button class="ghost" data-close-user-modal type="button">Vazgeç</button>
+          <button class="primary" type="submit">Kaydet</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="modal-backdrop" data-confirm-modal hidden>
+      <div class="modal" role="dialog" aria-modal="true">
+        <div>
+          <span class="eyebrow">Onay gerekli</span>
+          <h2 data-confirm-title></h2>
+        </div>
+        <p data-confirm-message></p>
+        <div class="modal-actions">
+          <button class="ghost" data-confirm-cancel type="button">Vazgeç</button>
+          <button class="danger" data-confirm-ok type="button">Onayla</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="toast" data-toast hidden>
+      <strong data-toast-title></strong>
+      <span data-toast-message></span>
+      <button class="secondary mini" data-toast-close type="button">Kapat</button>
+    </section>
+
+    <script>
+      const levels = [
+        { id: 1, name: "Seviye 1", label: "Görüntüleme" },
+        { id: 2, name: "Seviye 2", label: "Operasyon" },
+        { id: 3, name: "Seviye 3", label: "Onay Yetkisi" },
+        { id: 4, name: "Seviye 4", label: "Tam Yetki" }
+      ];
+
+      const modules = ["Dashboard", "Kullanıcılar", "Roller", "Raporlar", "Ayarlar", "Audit Log"];
+      const actions = ["Gör", "Oluştur", "Düzenle", "Sil", "Onayla", "Dışa aktar"];
+
+      const state = {
+        currentPage: "dashboard",
+        selectedCompanyId: "c1",
+        matrixCompanyId: "c1",
+        matrixLevel: 1,
+        companies: [
+          { id: "c1", name: "Biga Otel Grubu", sector: "Konaklama" },
+          { id: "c2", name: "Mavi Lojistik", sector: "Lojistik" },
+          { id: "c3", name: "Nova Sağlık", sector: "Sağlık" }
+        ],
+        roles: [
+          { id: "r1", companyId: "c1", name: "Güvenlik Müdürü", level: 4, description: "Canlı operasyon ve yönetim ayarları" },
+          { id: "r2", companyId: "c1", name: "Kapı Operatörü", level: 2, description: "Giriş çıkış ve günlük operasyon" },
+          { id: "r3", companyId: "c1", name: "Departman Amiri", level: 3, description: "Onay ve departman kayıt takibi" },
+          { id: "r4", companyId: "c2", name: "Operasyon Yöneticisi", level: 4, description: "Lojistik operasyon yetkileri" },
+          { id: "r5", companyId: "c2", name: "Saha Kullanıcısı", level: 2, description: "Saha kayıt ve rapor görüntüleme" },
+          { id: "r6", companyId: "c3", name: "Klinik Yönetici", level: 4, description: "Sağlık tesisi yönetimi" }
+        ],
+        users: [
+          { id: "u1", companyId: "c1", roleId: "r1", name: "Bilal Bozduman", email: "bilal@bigabilisim.com", level: 4, status: "active" },
+          { id: "u2", companyId: "c1", roleId: "r2", name: "Aylin Güven", email: "aylin@otel.com", level: 2, status: "active" },
+          { id: "u3", companyId: "c1", roleId: "r3", name: "Mert Kaya", email: "mert@otel.com", level: 3, status: "passive" },
+          { id: "u4", companyId: "c2", roleId: "r4", name: "Deniz Arslan", email: "deniz@lojistik.com", level: 4, status: "active" },
+          { id: "u5", companyId: "c2", roleId: "r5", name: "Ece Demir", email: "ece@lojistik.com", level: 2, status: "active" },
+          { id: "u6", companyId: "c3", roleId: "r6", name: "Selin Aksoy", email: "selin@saglik.com", level: 4, status: "active" }
+        ],
+        approvals: [
+          { id: "a1", companyId: "c1", title: "Yeni rol ataması", status: "pending", detail: "Kapı Operatörü rolüne geçici Seviye 3 talebi" },
+          { id: "a2", companyId: "c1", title: "Rapor dışa aktarımı", status: "pending", detail: "Aylık ziyaret raporu dışa aktarım onayı" },
+          { id: "a3", companyId: "c2", title: "Ayar değişikliği", status: "pending", detail: "IP güvenlik anahtarı aktif edilecek" },
+          { id: "a4", companyId: "c3", title: "Kullanıcı aktivasyonu", status: "approved", detail: "Klinik yönetici kullanıcısı onaylandı" }
+        ],
+        logs: [
+          { id: "l1", companyId: "c1", title: "Yetkisiz silme denemesi", severity: "critical", detail: "Seviye 2 kullanıcı Ayarlar > Sil işlemini denedi", resolved: false },
+          { id: "l2", companyId: "c1", title: "Çoklu hatalı giriş", severity: "high", detail: "Aynı IP üzerinden 5 hatalı giriş", resolved: false },
+          { id: "l3", companyId: "c2", title: "Dışa aktarım talebi", severity: "medium", detail: "Rapor dışa aktarımı onay bekliyor", resolved: true },
+          { id: "l4", companyId: "c3", title: "Kritik ayar kapatıldı", severity: "critical", detail: "2FA anahtarı geçici olarak kapatıldı", resolved: false }
+        ],
+        settings: {
+          c1: { twoFactor: true, ipRestriction: true, approvalRequired: true, auditExport: false },
+          c2: { twoFactor: true, ipRestriction: false, approvalRequired: true, auditExport: true },
+          c3: { twoFactor: false, ipRestriction: true, approvalRequired: true, auditExport: false }
+        },
+        audit: [],
+        permissions: {}
+      };
+
+      const pageTitles = {
+        dashboard: "Dashboard",
+        users: "Kullanıcılar",
+        roles: "Roller ve İzinler",
+        approvals: "Onaylar",
+        logs: "Kritik Loglar",
+        audit: "Denetim",
+        settings: "Ayarlar"
+      };
+
+      const settingLabels = {
+        twoFactor: "İki aşamalı doğrulama zorunlu",
+        ipRestriction: "IP kısıtlama aktif",
+        approvalRequired: "Seviye değişikliğinde onay iste",
+        auditExport: "Audit dışa aktarımına izin ver"
+      };
+
+      const dom = {
+        currentPageTitle: document.querySelector("[data-current-page-title]"),
+        companyName: document.querySelector("[data-current-company-name]"),
+        companySector: document.querySelector("[data-company-sector]"),
+        companyToggle: document.querySelector("[data-company-toggle]"),
+        companyMenu: document.querySelector("[data-company-menu]"),
+        companyList: document.querySelector("[data-company-list]"),
+        companyForm: document.querySelector("[data-company-form]"),
+        companyInput: document.querySelector("[data-company-name-input]"),
+        deleteCompany: document.querySelector("[data-delete-company]"),
+        usersBody: document.querySelector("[data-users-body]"),
+        rolesBody: document.querySelector("[data-roles-body]"),
+        approvalsBody: document.querySelector("[data-approvals-body]"),
+        logsBody: document.querySelector("[data-logs-body]"),
+        auditBody: document.querySelector("[data-audit-body]"),
+        dashboardAudit: document.querySelector("[data-dashboard-audit]"),
+        settingsBody: document.querySelector("[data-settings-body]"),
+        levelSummary: document.querySelector("[data-level-summary]"),
+        matrixCompany: document.querySelector("[data-matrix-company]"),
+        matrixLevel: document.querySelector("[data-matrix-level]"),
+        permissionMatrix: document.querySelector("[data-permission-matrix]"),
+        userModal: document.querySelector("[data-user-modal]"),
+        userForm: document.querySelector("[data-user-form]"),
+        confirmModal: document.querySelector("[data-confirm-modal]"),
+        confirmTitle: document.querySelector("[data-confirm-title]"),
+        confirmMessage: document.querySelector("[data-confirm-message]"),
+        confirmOk: document.querySelector("[data-confirm-ok]"),
+        confirmCancel: document.querySelector("[data-confirm-cancel]"),
+        toast: document.querySelector("[data-toast]"),
+        toastTitle: document.querySelector("[data-toast-title]"),
+        toastMessage: document.querySelector("[data-toast-message]")
+      };
+
+      function init() {
+        seedPermissions();
+        state.audit = [
+          auditItem("Sistem", "Panel açıldı ve firma bazlı yetki matrisi yüklendi.", "c1"),
+          auditItem("Sistem", "Örnek lojistik firması eklendi.", "c2"),
+          auditItem("Sistem", "Sağlık firması için Seviye 4 yetkileri tanımlandı.", "c3")
+        ];
+
+        bindEvents();
+        render();
+      }
+
+      function seedPermissions() {
+        state.companies.forEach((company) => {
+          levels.forEach((level) => {
+            const key = permissionKey(company.id, level.id);
+            state.permissions[key] = {};
+            modules.forEach((module) => {
+              state.permissions[key][module] = {};
+              actions.forEach((action) => {
+                state.permissions[key][module][action] = action === "Gör"
+                  || (level.id >= 2 && ["Oluştur", "Düzenle"].includes(action))
+                  || (level.id >= 3 && action === "Onayla")
+                  || (level.id >= 4 && ["Sil", "Dışa aktar"].includes(action));
+              });
+            });
+          });
+        });
+      }
+
+      function bindEvents() {
+        document.querySelectorAll("[data-page-link]").forEach((button) => {
+          button.addEventListener("click", () => setPage(button.dataset.pageLink));
+        });
+
+        dom.companyToggle.addEventListener("click", () => {
+          const hidden = dom.companyMenu.hidden;
+          dom.companyMenu.hidden = !hidden;
+          dom.companyToggle.setAttribute("aria-expanded", hidden ? "true" : "false");
+        });
+
+        document.addEventListener("click", (event) => {
+          if (!event.target.closest(".company-switcher")) {
+            dom.companyMenu.hidden = true;
+            dom.companyToggle.setAttribute("aria-expanded", "false");
+          }
+        });
+
+        dom.companyForm.addEventListener("submit", addCompany);
+        dom.deleteCompany.addEventListener("click", requestDeleteCompany);
+        document.querySelector("[data-open-user-modal]").addEventListener("click", openUserModal);
+        document.querySelector("[data-close-user-modal]").addEventListener("click", closeUserModal);
+        dom.userModal.addEventListener("click", (event) => {
+          if (event.target === dom.userModal) closeUserModal();
+        });
+        dom.userForm.addEventListener("submit", addUser);
+
+        document.querySelector("[data-search-form]").addEventListener("submit", handleSearch);
+        document.querySelector("[data-toast-close]").addEventListener("click", () => dom.toast.hidden = true);
+
+        dom.matrixCompany.addEventListener("change", () => {
+          state.matrixCompanyId = dom.matrixCompany.value;
+          renderPermissionMatrix();
+        });
+
+        dom.matrixLevel.addEventListener("change", () => {
+          state.matrixLevel = Number(dom.matrixLevel.value);
+          renderPermissionMatrix();
+        });
+
+        dom.confirmCancel.addEventListener("click", closeConfirm);
+      }
+
+      function render() {
+        const company = currentCompany();
+        dom.companyName.textContent = company.name;
+        dom.companySector.textContent = company.sector;
+        dom.currentPageTitle.textContent = pageTitles[state.currentPage];
+
+        document.querySelectorAll("[data-page-link]").forEach((button) => {
+          button.classList.toggle("active", button.dataset.pageLink === state.currentPage);
+        });
+
+        document.querySelectorAll("[data-page]").forEach((page) => {
+          page.classList.toggle("active", page.dataset.page === state.currentPage);
+        });
+
+        renderCompanyMenu();
+        renderMetrics();
+        renderUsers();
+        renderRoles();
+        renderMatrixSelectors();
+        renderPermissionMatrix();
+        renderApprovals();
+        renderLogs();
+        renderAudit();
+        renderSettings();
+      }
+
+      function renderCompanyMenu() {
+        dom.companyList.innerHTML = state.companies.map((company) => {
+          const count = companyUsers(company.id).length;
+          return `
+            <button class="company-item ${company.id === state.selectedCompanyId ? "active" : ""}" data-select-company="${company.id}" type="button">
+              <span><strong>${escapeHtml(company.name)}</strong><br><small>${escapeHtml(company.sector)} · ${count} kullanıcı</small></span>
+              <span class="status ${company.id === state.selectedCompanyId ? "ok" : "muted"}">${company.id === state.selectedCompanyId ? "Aktif" : "Seç"}</span>
+            </button>
+          `;
+        }).join("");
+
+        dom.companyList.querySelectorAll("[data-select-company]").forEach((button) => {
+          button.addEventListener("click", () => {
+            state.selectedCompanyId = button.dataset.selectCompany;
+            state.matrixCompanyId = state.selectedCompanyId;
+            dom.companyMenu.hidden = true;
+            addAudit("Firma değiştirildi", currentCompany().name + " aktif firma yapıldı.");
+            render();
+          });
+        });
+      }
+
+      function renderMetrics() {
+        const users = companyUsers();
+        const pendingApprovals = companyApprovals().filter((item) => item.status === "pending").length;
+        const criticalLogs = companyLogs().filter((item) => item.severity === "critical" && !item.resolved).length;
+
+        document.querySelector("[data-metric='activeUsers']").textContent = users.filter((user) => user.status === "active").length;
+        document.querySelector("[data-metric='fullAccess']").textContent = users.filter((user) => user.level === 4).length;
+        document.querySelector("[data-metric='pendingApprovals']").textContent = pendingApprovals;
+        document.querySelector("[data-metric='criticalLogs']").textContent = criticalLogs;
+
+        dom.levelSummary.innerHTML = levels.map((level) => {
+          const count = users.filter((user) => user.level === level.id).length;
+          return `<article class="level-item"><strong>${level.name} - ${level.label}</strong><small>${count} kullanıcı</small></article>`;
+        }).join("");
+
+        dom.dashboardAudit.innerHTML = recentAudit().slice(0, 5).map(renderAuditItem).join("") || empty("Henüz denetim kaydı yok.");
+      }
+
+      function renderUsers() {
+        const users = companyUsers();
+        dom.usersBody.innerHTML = users.map((user) => {
+          const role = roleById(user.roleId);
+          const level = levelById(user.level);
+          return `
+            <article class="table-row">
+              <strong data-label="Kullanıcı">${escapeHtml(user.name)}</strong>
+              <span data-label="E-posta">${escapeHtml(user.email)}</span>
+              <span data-label="Rol">${escapeHtml(role ? role.name : "-")}</span>
+              <span data-label="Seviye">${level.name} · ${level.label}</span>
+              <span data-label="Durum" class="status ${user.status === "active" ? "ok" : "muted"}">${user.status === "active" ? "Aktif" : "Pasif"}</span>
+              <span data-label="İşlem" class="actions">
+                <button class="secondary mini" data-toggle-user="${user.id}" type="button">${user.status === "active" ? "Pasifleştir" : "Aktifleştir"}</button>
+              </span>
+            </article>
+          `;
+        }).join("") || empty("Bu firmada kullanıcı yok.");
+
+        dom.usersBody.querySelectorAll("[data-toggle-user]").forEach((button) => {
+          button.addEventListener("click", () => toggleUser(button.dataset.toggleUser));
+        });
+      }
+
+      function renderRoles() {
+        const roles = companyRoles();
+        dom.rolesBody.innerHTML = roles.map((role) => {
+          const level = levelById(role.level);
+          const count = companyUsers().filter((user) => user.roleId === role.id).length;
+          return `
+            <article class="table-row">
+              <strong data-label="Rol">${escapeHtml(role.name)}</strong>
+              <span data-label="Varsayılan seviye">${level.name}</span>
+              <span data-label="Açıklama">${escapeHtml(role.description)}</span>
+              <span data-label="Kullanıcı" class="status muted">${count} kullanıcı</span>
+            </article>
+          `;
+        }).join("") || empty("Bu firmada rol yok.");
+      }
+
+      function renderMatrixSelectors() {
+        dom.matrixCompany.innerHTML = state.companies.map((company) => (
+          `<option value="${company.id}" ${company.id === state.matrixCompanyId ? "selected" : ""}>${escapeHtml(company.name)}</option>`
+        )).join("");
+
+        dom.matrixLevel.innerHTML = levels.map((level) => (
+          `<option value="${level.id}" ${level.id === state.matrixLevel ? "selected" : ""}>${level.name} - ${level.label}</option>`
+        )).join("");
+      }
+
+      function renderPermissionMatrix() {
+        const matrix = state.permissions[permissionKey(state.matrixCompanyId, state.matrixLevel)];
+        dom.permissionMatrix.innerHTML = `
+          <div class="matrix-row matrix-head">
+            <span>Modül</span>
+            ${actions.map((action) => `<span>${action}</span>`).join("")}
+          </div>
+          ${modules.map((module) => `
+            <div class="matrix-row">
+              <strong>${module}</strong>
+              ${actions.map((action) => `
+                <label class="switch" title="${module} - ${action}">
+                  <input data-permission-toggle data-module="${module}" data-action="${action}" type="checkbox" ${matrix[module][action] ? "checked" : ""}>
+                  <i aria-hidden="true"></i>
+                </label>
+              `).join("")}
+            </div>
+          `).join("")}
+        `;
+
+        dom.permissionMatrix.querySelectorAll("[data-permission-toggle]").forEach((input) => {
+          input.addEventListener("change", () => {
+            const key = permissionKey(state.matrixCompanyId, state.matrixLevel);
+            state.permissions[key][input.dataset.module][input.dataset.action] = input.checked;
+            const companyName = companyById(state.matrixCompanyId).name;
+            addAudit("İzin matrisi güncellendi", `${companyName}: ${input.dataset.module} / ${input.dataset.action} ${input.checked ? "açıldı" : "kapatıldı"}.`);
+            showToast("İzin güncellendi", "Değişiklik örnek veri üzerinde kaydedildi.");
+            renderMetrics();
+            renderAudit();
+          });
+        });
+      }
+
+      function renderApprovals() {
+        const approvals = companyApprovals();
+        dom.approvalsBody.innerHTML = approvals.map((item) => `
+          <article class="table-row">
+            <strong data-label="Talep">${escapeHtml(item.title)}</strong>
+            <span data-label="Durum" class="status ${item.status === "pending" ? "warning" : item.status === "approved" ? "ok" : "danger"}">${statusLabel(item.status)}</span>
+            <span data-label="Açıklama">${escapeHtml(item.detail)}</span>
+            <span data-label="İşlem" class="actions">
+              ${item.status === "pending" ? `
+                <button class="primary mini" data-approval-action="${item.id}:approved" type="button">Onayla</button>
+                <button class="danger mini" data-approval-action="${item.id}:rejected" type="button">Reddet</button>
+              ` : `<span class="status muted">Tamamlandı</span>`}
+            </span>
+          </article>
+        `).join("") || empty("Bekleyen veya geçmiş onay bulunmuyor.");
+
+        dom.approvalsBody.querySelectorAll("[data-approval-action]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const [id, status] = button.dataset.approvalAction.split(":");
+            updateApproval(id, status);
+          });
+        });
+      }
+
+      function renderLogs() {
+        const logs = companyLogs();
+        dom.logsBody.innerHTML = logs.map((item) => `
+          <article class="table-row">
+            <strong data-label="Olay">${escapeHtml(item.title)}</strong>
+            <span data-label="Seviye" class="status ${item.severity === "critical" ? "danger" : item.severity === "high" ? "warning" : "muted"}">${severityLabel(item.severity)}</span>
+            <span data-label="Detay">${escapeHtml(item.detail)}</span>
+            <span data-label="İşlem" class="actions">
+              ${item.resolved ? `<span class="status ok">Çözüldü</span>` : `<button class="primary mini" data-resolve-log="${item.id}" type="button">Çözüldü</button>`}
+            </span>
+          </article>
+        `).join("") || empty("Kritik log bulunmuyor.");
+
+        dom.logsBody.querySelectorAll("[data-resolve-log]").forEach((button) => {
+          button.addEventListener("click", () => resolveLog(button.dataset.resolveLog));
+        });
+      }
+
+      function renderAudit() {
+        dom.auditBody.innerHTML = recentAudit().map(renderAuditItem).join("") || empty("Bu firma için denetim kaydı yok.");
+      }
+
+      function renderAuditItem(item) {
+        return `
+          <article class="audit-item">
+            <strong>${escapeHtml(item.title)}</strong>
+            <small>${escapeHtml(item.message)}</small>
+            <small>${escapeHtml(item.time)}</small>
+          </article>
+        `;
+      }
+
+      function renderSettings() {
+        const settings = state.settings[state.selectedCompanyId] || {};
+        dom.settingsBody.innerHTML = Object.keys(settingLabels).map((key) => `
+          <article class="setting-item">
+            <div>
+              <strong>${settingLabels[key]}</strong>
+              <small>${settings[key] ? "Aktif" : "Pasif"}</small>
+            </div>
+            <label class="switch">
+              <input data-setting-toggle="${key}" type="checkbox" ${settings[key] ? "checked" : ""}>
+              <i aria-hidden="true"></i>
+            </label>
+          </article>
+        `).join("");
+
+        dom.settingsBody.querySelectorAll("[data-setting-toggle]").forEach((input) => {
+          input.addEventListener("change", () => {
+            const key = input.dataset.settingToggle;
+            state.settings[state.selectedCompanyId][key] = input.checked;
+            addAudit("Ayar değiştirildi", `${settingLabels[key]} ${input.checked ? "aktif" : "pasif"} yapıldı.`);
+            showToast("Ayar güncellendi", "Güvenlik ayarı örnek veri üzerinde değiştirildi.");
+            render();
+          });
+        });
+      }
+
+      function addCompany(event) {
+        event.preventDefault();
+        const name = dom.companyInput.value.trim();
+        if (!name) {
+          showToast("Firma adı gerekli", "Yeni firma eklemek için firma adı girin.");
+          return;
+        }
+
+        const id = "c" + Date.now();
+        state.companies.push({ id, name, sector: "Genel" });
+        state.roles.push(
+          { id: "r" + Date.now(), companyId: id, name: "Firma Yöneticisi", level: 4, description: "Yeni firma için tam yetkili yönetici rolü" },
+          { id: "r" + (Date.now() + 1), companyId: id, name: "Operasyon Kullanıcısı", level: 2, description: "Yeni firma için günlük operasyon rolü" }
+        );
+        state.settings[id] = { twoFactor: false, ipRestriction: false, approvalRequired: true, auditExport: false };
+        levels.forEach((level) => {
+          const key = permissionKey(id, level.id);
+          state.permissions[key] = {};
+          modules.forEach((module) => {
+            state.permissions[key][module] = {};
+            actions.forEach((action) => state.permissions[key][module][action] = action === "Gör");
+          });
+        });
+
+        state.selectedCompanyId = id;
+        state.matrixCompanyId = id;
+        dom.companyInput.value = "";
+        addAudit("Firma eklendi", `${name} firması oluşturuldu.`, id);
+        showToast("Firma eklendi", `${name} aktif firma olarak seçildi.`);
+        render();
+      }
+
+      function requestDeleteCompany() {
+        if (state.companies.length <= 1) {
+          showToast("Firma silinemez", "Sistemde en az bir firma kalmalıdır.");
+          return;
+        }
+
+        const company = currentCompany();
+        const count = companyUsers().length;
+        openConfirm(
+          "Firmayı silmek istiyor musunuz?",
+          `${company.name} firmasına bağlı ${count} kullanıcı var. Firma silinirse örnek veride bu firmaya bağlı kullanıcı, rol, onay ve loglar kaldırılır.`,
+          () => deleteCompany(company.id)
+        );
+      }
+
+      function deleteCompany(companyId) {
+        const company = companyById(companyId);
+        state.companies = state.companies.filter((item) => item.id !== companyId);
+        state.users = state.users.filter((item) => item.companyId !== companyId);
+        state.roles = state.roles.filter((item) => item.companyId !== companyId);
+        state.approvals = state.approvals.filter((item) => item.companyId !== companyId);
+        state.logs = state.logs.filter((item) => item.companyId !== companyId);
+        delete state.settings[companyId];
+        Object.keys(state.permissions).forEach((key) => {
+          if (key.startsWith(companyId + ":")) delete state.permissions[key];
+        });
+
+        state.selectedCompanyId = state.companies[0].id;
+        state.matrixCompanyId = state.selectedCompanyId;
+        addAudit("Firma silindi", `${company.name} firması silindi.`);
+        showToast("Firma silindi", "Aktif firma ilk kullanılabilir firmaya alındı.");
+        render();
+      }
+
+      function openUserModal() {
+        dom.userForm.reset();
+        dom.userForm.elements.companyId.innerHTML = state.companies.map((company) => `<option value="${company.id}" ${company.id === state.selectedCompanyId ? "selected" : ""}>${escapeHtml(company.name)}</option>`).join("");
+        fillRoleOptions();
+        dom.userForm.elements.level.innerHTML = levels.map((level) => `<option value="${level.id}">${level.name} - ${level.label}</option>`).join("");
+        dom.userForm.elements.companyId.onchange = fillRoleOptions;
+        dom.userModal.hidden = false;
+        dom.userForm.elements.name.focus();
+      }
+
+      function fillRoleOptions() {
+        const companyId = dom.userForm.elements.companyId.value || state.selectedCompanyId;
+        const roles = state.roles.filter((role) => role.companyId === companyId);
+        dom.userForm.elements.roleId.innerHTML = roles.map((role) => `<option value="${role.id}">${escapeHtml(role.name)}</option>`).join("");
+      }
+
+      function closeUserModal() {
+        dom.userModal.hidden = true;
+      }
+
+      function addUser(event) {
+        event.preventDefault();
+        const form = new FormData(dom.userForm);
+        const email = String(form.get("email")).trim().toLowerCase();
+
+        if (state.users.some((user) => user.email.toLowerCase() === email)) {
+          showToast("E-posta zaten kayıtlı", "Aynı e-posta farklı firmada ikinci kez kaydedilemez.");
+          return;
+        }
+
+        const user = {
+          id: "u" + Date.now(),
+          name: String(form.get("name")).trim(),
+          email,
+          companyId: String(form.get("companyId")),
+          roleId: String(form.get("roleId")),
+          level: Number(form.get("level")),
+          status: String(form.get("status"))
+        };
+
+        state.users.push(user);
+        state.selectedCompanyId = user.companyId;
+        state.matrixCompanyId = user.companyId;
+        closeUserModal();
+        addAudit("Kullanıcı eklendi", `${user.name} kullanıcısı ${levelById(user.level).name} ile eklendi.`);
+        showToast("Kullanıcı kaydedildi", `${user.name} seçili firma altında oluşturuldu.`);
+        render();
+      }
+
+      function toggleUser(id) {
+        const user = state.users.find((item) => item.id === id);
+        if (!user) return;
+        user.status = user.status === "active" ? "passive" : "active";
+        addAudit("Kullanıcı durumu değişti", `${user.name} ${user.status === "active" ? "aktif" : "pasif"} yapıldı.`);
+        render();
+      }
+
+      function updateApproval(id, status) {
+        const item = state.approvals.find((approval) => approval.id === id);
+        if (!item) return;
+        item.status = status;
+        addAudit("Onay sonucu işlendi", `${item.title} talebi ${statusLabel(status).toLowerCase()} olarak kapandı.`);
+        showToast("Onay güncellendi", `${item.title} talebi işlendi.`);
+        render();
+      }
+
+      function resolveLog(id) {
+        const item = state.logs.find((log) => log.id === id);
+        if (!item) return;
+        item.resolved = true;
+        addAudit("Kritik log çözüldü", `${item.title} kapatıldı.`);
+        showToast("Log kapatıldı", "Kritik log çözüldü olarak işaretlendi.");
+        render();
+      }
+
+      function handleSearch(event) {
+        event.preventDefault();
+        const query = event.target.querySelector("[data-search-input]").value.trim().toLowerCase();
+        if (!query) return;
+
+        const user = state.users.find((item) => item.companyId === state.selectedCompanyId && (
+          item.name.toLowerCase().includes(query) || item.email.toLowerCase().includes(query)
+        ));
+        if (user) {
+          setPage("users");
+          showToast("Kullanıcı bulundu", `${user.name} kullanıcı listesinde görüntüleniyor.`);
+          return;
+        }
+
+        const role = state.roles.find((item) => item.companyId === state.selectedCompanyId && item.name.toLowerCase().includes(query));
+        if (role) {
+          setPage("roles");
+          showToast("Rol bulundu", `${role.name} rol ve izinler sayfasında.`);
+          return;
+        }
+
+        const level = levels.find((item) => (`${item.name} ${item.label}`).toLowerCase().includes(query));
+        if (level) {
+          setPage("roles");
+          state.matrixLevel = level.id;
+          showToast("Seviye bulundu", `${level.name} izin matrisi açıldı.`);
+          render();
+          return;
+        }
+
+        showToast("Sonuç bulunamadı", "Aramanıza uygun kullanıcı, rol veya seviye bulunamadı.");
+      }
+
+      function setPage(page) {
+        state.currentPage = page;
+        render();
+      }
+
+      function openConfirm(title, message, onConfirm) {
+        dom.confirmTitle.textContent = title;
+        dom.confirmMessage.textContent = message;
+        dom.confirmModal.hidden = false;
+        dom.confirmOk.onclick = () => {
+          closeConfirm();
+          onConfirm();
+        };
+      }
+
+      function closeConfirm() {
+        dom.confirmModal.hidden = true;
+        dom.confirmOk.onclick = null;
+      }
+
+      function showToast(title, message) {
+        dom.toastTitle.textContent = title;
+        dom.toastMessage.textContent = message;
+        dom.toast.hidden = false;
+      }
+
+      function addAudit(title, message, companyId = state.selectedCompanyId) {
+        state.audit.unshift(auditItem(title, message, companyId));
+      }
+
+      function auditItem(title, message, companyId) {
+        return {
+          companyId,
+          title,
+          message,
+          time: new Date().toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" })
+        };
+      }
+
+      function currentCompany() {
+        return companyById(state.selectedCompanyId);
+      }
+
+      function companyById(id) {
+        return state.companies.find((company) => company.id === id) || state.companies[0];
+      }
+
+      function roleById(id) {
+        return state.roles.find((role) => role.id === id);
+      }
+
+      function levelById(id) {
+        return levels.find((level) => level.id === Number(id)) || levels[0];
+      }
+
+      function companyUsers(companyId = state.selectedCompanyId) {
+        return state.users.filter((user) => user.companyId === companyId);
+      }
+
+      function companyRoles(companyId = state.selectedCompanyId) {
+        return state.roles.filter((role) => role.companyId === companyId);
+      }
+
+      function companyApprovals(companyId = state.selectedCompanyId) {
+        return state.approvals.filter((item) => item.companyId === companyId);
+      }
+
+      function companyLogs(companyId = state.selectedCompanyId) {
+        return state.logs.filter((item) => item.companyId === companyId);
+      }
+
+      function recentAudit(companyId = state.selectedCompanyId) {
+        return state.audit.filter((item) => item.companyId === companyId);
+      }
+
+      function permissionKey(companyId, level) {
+        return `${companyId}:${level}`;
+      }
+
+      function statusLabel(status) {
+        return { pending: "Bekliyor", approved: "Onaylandı", rejected: "Reddedildi" }[status] || status;
+      }
+
+      function severityLabel(severity) {
+        return { critical: "Kritik", high: "Yüksek", medium: "Orta" }[severity] || severity;
+      }
+
+      function empty(message) {
+        return `<p class="empty">${message}</p>`;
+      }
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, (char) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;"
+        }[char]));
+      }
+
+      init();
+    </script>
+  </body>
+</html>

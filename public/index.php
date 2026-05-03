@@ -24,6 +24,7 @@ $route = $_GET['route'] ?? parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), 
 $route = $route === '/index.php' ? '/' : rtrim($route, '/');
 $route = $route === '' ? '/' : $route;
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$routeMethod = $method === 'HEAD' ? 'GET' : $method;
 
 try {
     if ($route === '/' && $method === 'GET') {
@@ -49,6 +50,7 @@ try {
             '/password/forgot' => [PasswordController::class, 'forgot'],
             '/password/reset' => [PasswordController::class, 'reset'],
             '/account/password' => [AccountController::class, 'password'],
+            '/account/preferences' => [AccountController::class, 'preferences'],
             '/mobile-notifications/web-push-config' => [MobileNotificationController::class, 'webPushConfig'],
             '/reservationless/review' => [ReservationlessReviewController::class, 'show'],
             '/verifications/respond' => [DepartmentVerificationController::class, 'respond'],
@@ -79,6 +81,7 @@ try {
             '/password/forgot' => [PasswordController::class, 'sendResetLink'],
             '/password/reset' => [PasswordController::class, 'update'],
             '/account/password' => [AccountController::class, 'updatePassword'],
+            '/account/preferences' => [AccountController::class, 'savePreferences'],
             '/reservationless/review' => [ReservationlessReviewController::class, 'submit'],
             '/logout' => [AuthController::class, 'logout'],
             '/suggestions' => [SuggestionController::class, 'store'],
@@ -129,6 +132,7 @@ try {
         'GET' => [
             '/dashboard' => 'dashboard.view',
             '/account/password' => 'dashboard.view',
+            '/account/preferences' => 'dashboard.view',
             '/mobile-notifications/web-push-config' => 'dashboard.view',
             '/admin' => $adminAccessPermissions,
             '/admin/guide' => $adminAccessPermissions,
@@ -152,6 +156,7 @@ try {
         'POST' => [
             '/dashboard/heartbeat' => 'dashboard.view',
             '/account/password' => 'dashboard.view',
+            '/account/preferences' => 'dashboard.view',
             '/mobile-notifications/poll' => 'dashboard.view',
             '/mobile-notifications/subscribe' => 'dashboard.view',
             '/mobile-notifications/unsubscribe' => 'dashboard.view',
@@ -179,20 +184,20 @@ try {
         ],
     ];
 
-    if (!isset($routes[$method][$route])) {
+    if (!isset($routes[$routeMethod][$route])) {
         http_response_code(404);
         echo view('errors/404', ['title' => 'Sayfa Bulunamadı']);
         exit;
     }
 
-    $requiredPermission = $routePermissions[$method][$route] ?? null;
+    $requiredPermission = $routePermissions[$routeMethod][$route] ?? null;
     if (is_array($requiredPermission)) {
         Auth::requireAny($requiredPermission);
     } elseif (is_string($requiredPermission)) {
         Auth::requirePermission($requiredPermission);
     }
 
-    [$controller, $action] = $routes[$method][$route];
+    [$controller, $action] = $routes[$routeMethod][$route];
     echo (new $controller())->$action();
 } catch (Throwable $error) {
     http_response_code(500);

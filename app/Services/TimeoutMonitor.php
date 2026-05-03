@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Core\Database;
 use App\Models\Category;
+use App\Models\MobileNotification;
 use App\Models\Settings;
 use App\Services\Notifications\NotificationService;
 use PDO;
@@ -24,6 +25,7 @@ final class TimeoutMonitor
             'overdue' => $this->markOverdue($limit),
             'questions' => $this->askDepartments($limit),
             'escalations' => $this->escalateNoResponses($limit),
+            'reminders' => $this->remindOpenDepartmentQuestions($limit),
         ];
     }
 
@@ -152,6 +154,13 @@ final class TimeoutMonitor
                 'expires_after_minutes' => $escalationAfter,
                 ...$this->actionLinks($responseToken),
             ]);
+            $this->queueApprovalPush(
+                (int) $visit['id'],
+                (int) ($managerUserId ?? 0),
+                'department_question',
+                'Otel Güvenlik: Departman Onayı',
+                $questionText . ' Lütfen Evet/Hayır ile yanıtlayın.'
+            );
             $count++;
         }
 
@@ -269,6 +278,65 @@ final class TimeoutMonitor
                 $questionText,
                 $this->actionLinks($responseToken)
             );
+            $this->queueApprovalPush(
+                (int) $verification['visit_id'],
+                $nextUserId,
+                'escalation',
+                'Otel Güvenlik: ' . $this->levelLabel($nextLevel) . ' Eskalasyon',
+                $questionText . ' Lütfen Evet/Hayır ile yanıtlayın.'
+            );
+            $count++;
+        }
+
+        return $count;
+    }
+
+    private function remindOpenDepartmentQuestions(int $limit): int
+    {
+        $verifications = $this->reminderVerifications($limit);
+        $count = 0;
+
+        foreach ($verifications as $verification) {
+            $responseToken = $this->ensureVerificationToken(
+                (int) $verification['id'],
+                (string) ($verification['response_token'] ?? '')
+            );
+            $levelLabel = $this->levelLabel((int) ($verification['escalation_level'] ?? 0));
+            $message = $verification['visitor_name']
+                . ' için ' . $levelLabel
+                . ' onayı bekliyor. Lütfen Evet/Hayır ile yanıtlayın. Geçen süre: '
+                . (int) $verification['elapsed_minutes'] . ' dk.';
+            $userId = (int) ($verification['sent_to_user_id'] ?: ($verification['manager_user_id'] ?? 0));
+
+            $this->addEvent(
+                (int) $verification['visit_id'],
+                'department_question',
+                $levelLabel . ' için saatlik amir onayı hatırlatması gönderildi.'
+            );
+
+            if ($userId > 0) {
+                (new NotificationService())->queueDirectUser(
+                    (int) $verification['visit_id'],
+                    $userId,
+                    'Otel Güvenlik: Amir Onayı Hatırlatma',
+                    $message,
+                    $this->actionLinks($responseToken)
+                );
+                $this->queueApprovalPush(
+                    (int) $verification['visit_id'],
+                    $userId,
+                    'department_reminder',
+                    'Otel Güvenlik: Amir Onayı Hatırlatma',
+                    $message
+                );
+            } else {
+                (new NotificationService())->queueForVisitEvent('department_question', (int) $verification['visit_id'], [
+                    'question_text' => (string) $verification['question_text'],
+                    'reminder_text' => $message,
+                    ...$this->actionLinks($responseToken),
+                ]);
+            }
+
             $count++;
         }
 
@@ -432,6 +500,13 @@ final class TimeoutMonitor
             $questionText,
             $this->actionLinks($responseToken)
         );
+        $this->queueApprovalPush(
+            (int) $visit['id'],
+            $nextUserId,
+            'escalation',
+            'Otel Güvenlik: ' . $this->levelLabel($level) . ' Eskalasyon',
+            $questionText . ' Lütfen Evet/Hayır ile yanıtlayın.'
+        );
     }
 
     private function expiredVerifications(int $limit): array
@@ -452,6 +527,57 @@ final class TimeoutMonitor
                AND dv.expires_at <= NOW()
                AND v.exit_at IS NULL
              ORDER BY dv.expires_at ASC
+             LIMIT ' . $limit
+        );
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    private function reminderVerifications(int $limit): array
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT
+                dv.id,
+                dv.visit_id,
+                dv.department_id,
+                dv.sent_to_user_id,
+                dv.question_text,
+                dv.response_token,
+                dv.escalation_level,
+                d.manager_user_id,
+                vi.full_name AS visitor_name,
+                TIMESTAMPDIFF(MINUTE, v.entry_at, NOW()) AS elapsed_minutes
+             FROM department_verifications dv
+             INNER JOIN visits v ON v.id = dv.visit_id
+             INNER JOIN visitors vi ON vi.id = v.visitor_id
+             LEFT JOIN departments d ON d.id = dv.department_id
+             WHERE dv.answer IS NULL
+               AND v.exit_at IS NULL
+               AND TIMESTAMPDIFF(
+                    MINUTE,
+                    GREATEST(
+                        dv.sent_at,
+                        COALESCE((
+                            SELECT MAX(ve.created_at)
+                            FROM visit_events ve
+                            WHERE ve.visit_id = dv.visit_id
+                              AND ve.event_type = "department_question"
+                        ), dv.sent_at)
+                    ),
+                    NOW()
+               ) >= 60
+             ORDER BY
+                GREATEST(
+                    dv.sent_at,
+                    COALESCE((
+                        SELECT MAX(ve.created_at)
+                        FROM visit_events ve
+                        WHERE ve.visit_id = dv.visit_id
+                          AND ve.event_type = "department_question"
+                    ), dv.sent_at)
+                ) ASC,
+                dv.sent_at ASC
              LIMIT ' . $limit
         );
         $stmt->execute();
@@ -493,6 +619,28 @@ final class TimeoutMonitor
     private function newResponseToken(): string
     {
         return bin2hex(random_bytes(24));
+    }
+
+    private function ensureVerificationToken(int $verificationId, string $responseToken): string
+    {
+        $responseToken = trim($responseToken);
+        if ($responseToken !== '') {
+            return $responseToken;
+        }
+
+        $responseToken = $this->newResponseToken();
+        $stmt = Database::connection()->prepare(
+            'UPDATE department_verifications
+             SET response_token = :response_token
+             WHERE id = :id
+               AND (response_token IS NULL OR response_token = "")'
+        );
+        $stmt->execute([
+            'id' => $verificationId,
+            'response_token' => $responseToken,
+        ]);
+
+        return $responseToken;
     }
 
     private function globalEscalationSettings(): array
@@ -560,6 +708,7 @@ final class TimeoutMonitor
     private function ensureEscalationWorkflowColumns(): void
     {
         (new Category())->ensureQuickAccessColumns();
+        (new MobileNotification())->ensureReady();
 
         $pdo = Database::connection();
         $visitColumns = $pdo->query('SHOW COLUMNS FROM visits')->fetchAll(PDO::FETCH_COLUMN);
@@ -628,6 +777,30 @@ final class TimeoutMonitor
         } catch (\Throwable $error) {
             $pdo->rollBack();
             throw $error;
+        }
+    }
+
+    private function queueApprovalPush(int $visitId, int $userId, string $eventType, string $title, string $message): void
+    {
+        if ($visitId <= 0 || $userId <= 0) {
+            return;
+        }
+
+        try {
+            $queued = (new MobileNotification())->queueDirectUserEvent(
+                $eventType,
+                $visitId,
+                $userId,
+                $title,
+                $message,
+                \route('/dashboard')
+            );
+
+            if ($queued > 0) {
+                (new WebPushService())->sendQueuedForVisit($visitId, $eventType);
+            }
+        } catch (\Throwable $error) {
+            error_log('Department approval web push error: ' . $error->getMessage());
         }
     }
 }

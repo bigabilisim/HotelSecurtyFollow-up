@@ -2,6 +2,7 @@
 
 use App\Core\Auth;
 use App\Core\Csrf;
+use App\Models\UserPreference;
 
 $settings = $settings ?? [];
 $appName = $settings['app.name'] ?? config('app.name');
@@ -40,6 +41,14 @@ $securityAlertMatch = flash('security_alert_match');
 $securityAlertReason = flash('security_alert_reason');
 $securityAlertAction = flash('security_alert_action');
 $mobileNotificationsEnabled = $user && !empty($user['mobile_notification_enabled']);
+$userPreferences = [];
+if ($user) {
+    try {
+        $userPreferences = (new UserPreference())->all((int) $user['id']);
+    } catch (Throwable) {
+        $userPreferences = [];
+    }
+}
 ?>
 <!doctype html>
 <html lang="tr">
@@ -61,14 +70,18 @@ $mobileNotificationsEnabled = $user && !empty($user['mobile_notification_enabled
   </head>
   <body>
     <main
-      class="app-shell"
+      class="app-shell<?= $user ? ' app-shell-authenticated' : ' app-shell-public' ?>"
+      <?php if ($user): ?>
+        data-csrf="<?= e(Csrf::token()) ?>"
+        data-user-preferences-url="<?= e(route('/account/preferences')) ?>"
+        data-user-preferences="<?= e(json_encode($userPreferences, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"
+      <?php endif; ?>
       <?php if ($mobileNotificationsEnabled): ?>
         data-mobile-notifications="1"
         data-mobile-notification-url="<?= e(route('/mobile-notifications/poll')) ?>"
         data-web-push-config-url="<?= e(route('/mobile-notifications/web-push-config')) ?>"
         data-web-push-subscribe-url="<?= e(route('/mobile-notifications/subscribe')) ?>"
         data-web-push-unsubscribe-url="<?= e(route('/mobile-notifications/unsubscribe')) ?>"
-        data-csrf="<?= e(Csrf::token()) ?>"
       <?php endif; ?>
     >
       <header class="topbar">
@@ -81,8 +94,18 @@ $mobileNotificationsEnabled = $user && !empty($user['mobile_notification_enabled
         </a>
 
         <?php if ($user): ?>
-          <nav class="topnav" aria-label="Ana menü">
+          <nav class="topnav" id="main-navigation" data-mobile-nav aria-label="Ana menü">
             <a href="<?= e(route('/dashboard')) ?>">Canlı Panel</a>
+            <?php if ($currentRoute === '/dashboard' && Auth::can('dashboard.view_settings')): ?>
+              <button
+                class="dashboard-view-toggle"
+                type="button"
+                data-dashboard-view-toggle
+                aria-controls="dashboard-view-controls"
+                aria-expanded="false"
+              >Görünüm Ayarı</button>
+            <?php endif; ?>
+            <button type="button" data-pwa-install>Uygulamayı Kur</button>
             <button type="button" data-suggestion-open>Öneri Yap</button>
             <a href="<?= e(route('/account/password')) ?>">Şifre Değiştir</a>
             <a href="<?= e(route('/guide')) ?>">Kılavuz</a>
@@ -97,6 +120,13 @@ $mobileNotificationsEnabled = $user && !empty($user['mobile_notification_enabled
               <button type="submit">Çıkış</button>
             </form>
           </nav>
+          <button
+            class="mobile-menu-toggle"
+            type="button"
+            data-mobile-menu-toggle
+            aria-controls="main-navigation"
+            aria-expanded="true"
+          >Menüyü Gizle</button>
         <?php endif; ?>
       </header>
 

@@ -67,13 +67,33 @@ final class Dashboard
                 c.name AS category_name,
                 c.color AS category_color,
                 d.name AS department_name,
-                TIMESTAMPDIFF(MINUTE, v.entry_at, NOW()) AS elapsed_minutes
+                TIMESTAMPDIFF(MINUTE, v.entry_at, NOW()) AS elapsed_minutes,
+                TIMESTAMPDIFF(SECOND, v.entry_at, NOW()) AS elapsed_seconds,
+                CASE
+                    WHEN v.max_duration_minutes_snapshot IS NULL THEN NULL
+                    ELSE (CAST(v.max_duration_minutes_snapshot AS SIGNED) * 60) - TIMESTAMPDIFF(SECOND, v.entry_at, NOW())
+                END AS remaining_seconds
              FROM visits v
              INNER JOIN visitors vi ON vi.id = v.visitor_id
              INNER JOIN visitor_categories c ON c.id = v.category_id
              LEFT JOIN departments d ON d.id = v.department_id
              WHERE v.exit_at IS NULL AND v.status <> 'exited'
-             ORDER BY v.entry_at DESC
+             ORDER BY
+                CASE
+                    WHEN v.status IN ('department_asked', 'department_approved', 'escalated') THEN 3
+                    WHEN TIMESTAMPDIFF(SECOND, v.entry_at, NOW()) < 180 THEN 0
+                    ELSE 1
+                END ASC,
+                CASE
+                    WHEN TIMESTAMPDIFF(SECOND, v.entry_at, NOW()) < 180 THEN v.entry_at
+                    ELSE NULL
+                END DESC,
+                CASE WHEN v.max_duration_minutes_snapshot IS NULL THEN 1 ELSE 0 END ASC,
+                CASE
+                    WHEN v.max_duration_minutes_snapshot IS NULL THEN 999999999
+                    ELSE (CAST(v.max_duration_minutes_snapshot AS SIGNED) * 60) - TIMESTAMPDIFF(SECOND, v.entry_at, NOW())
+                END ASC,
+                v.entry_at ASC
              LIMIT 100"
         );
 

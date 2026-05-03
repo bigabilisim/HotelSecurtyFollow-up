@@ -4,15 +4,15 @@ use App\Core\Csrf;
 
 $pendingVerifications = $pendingVerifications ?? [];
 ?>
-<?php if ($pendingVerifications): ?>
-  <section class="panel-card verification-panel">
-    <div class="section-head">
-      <div>
-        <p class="eyebrow">Departman onayı</p>
-        <h1>Bekleyen Sorular</h1>
-      </div>
+<section class="panel-card verification-panel">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Departman onayı</p>
+      <h1>Bekleyen Sorular</h1>
     </div>
+  </div>
 
+  <?php if ($pendingVerifications): ?>
     <div class="verification-list">
       <?php foreach ($pendingVerifications as $verification): ?>
         <article class="verification-item">
@@ -43,5 +43,7 @@ $pendingVerifications = $pendingVerifications ?? [];
         </article>
       <?php endforeach; ?>
     </div>
-  </section>
-<?php endif; ?>
+  <?php else: ?>
+    <article class="empty-state">Bekleyen departman onayı yok.</article>
+  <?php endif; ?>
+</section>

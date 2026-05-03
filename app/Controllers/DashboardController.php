@@ -36,7 +36,7 @@ final class DashboardController
         $isLoggedIn = Auth::check();
 
         return view('admin/guide', [
-            'title' => 'V1 Kullanım Kılavuzu',
+            'title' => 'V1.12 Kullanım Kılavuzu',
             'settings' => (new Settings())->all(),
             'backRoute' => $isLoggedIn ? '/dashboard' : '/login',
             'backLabel' => $isLoggedIn ? 'Canlı panele dön' : 'Giriş ekranına dön',
@@ -63,7 +63,7 @@ final class DashboardController
         $result = is_array($work['result'] ?? null) ? $work['result'] : [];
         $timeouts = is_array($result['timeouts'] ?? null)
             ? $result['timeouts']
-            : ['warnings' => 0, 'overdue' => 0, 'questions' => 0, 'escalations' => 0];
+            : ['warnings' => 0, 'overdue' => 0, 'questions' => 0, 'escalations' => 0, 'reminders' => 0];
         $notifications = is_array($result['notifications'] ?? null)
             ? $result['notifications']
             : ['processed' => 0, 'sent' => 0, 'failed' => 0, 'skipped' => 0];
@@ -124,7 +124,7 @@ final class DashboardController
     {
         $statusLabels = [
             'inside' => ['Normal', 'ok'],
-            'overdue' => ['Süre aşıldı', 'warning'],
+            'overdue' => ['Süre aşıldı', 'overdue'],
             'department_asked' => ['Amir sorusu', 'warning'],
             'department_approved' => ['Amir onayladı', 'ok'],
             'escalated' => ['Yöneticiye gitti', 'risk'],
@@ -135,6 +135,7 @@ final class DashboardController
             'exit' => ['Çıkış kaydı', 'muted'],
             'timeout_warning' => ['Süre uyarısı', 'warning'],
             'department_question' => ['Departman sorusu', 'warning'],
+            'department_question_reminder' => ['Amir hatırlatma', 'warning'],
             'department_answer_yes' => ['Amir onayı', 'ok'],
             'department_answer_no' => ['Olumsuz cevap', 'risk'],
             'department_no_response' => ['Cevap yok', 'risk'],
@@ -179,6 +180,14 @@ final class DashboardController
             'statusLabels' => $statusLabels,
             'activityLabels' => $activityLabels,
             'maskName' => $maskName,
+            'dashboardBlockAccess' => [
+                'door' => Auth::can('dashboard.block.door') && Auth::can('visits.create_entry'),
+                'inside' => Auth::can('dashboard.block.inside') && Auth::can('visits.view_all'),
+                'activity' => Auth::can('dashboard.block.activity'),
+                'stats' => Auth::can('dashboard.block.stats'),
+                'verifications' => Auth::can('dashboard.block.verifications') && Auth::can('visits.department_verify'),
+            ],
+            'canCustomizeDashboard' => Auth::can('dashboard.view_settings'),
         ];
     }
 }

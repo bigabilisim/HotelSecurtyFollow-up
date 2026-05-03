@@ -1,4 +1,4 @@
-const CACHE_NAME = "otel-guvenlik-pwa-v17";
+const CACHE_NAME = "otel-guvenlik-pwa-v18";
 const PRECACHE_URLS = [
   "/offline.html",
   "/assets/app.css",

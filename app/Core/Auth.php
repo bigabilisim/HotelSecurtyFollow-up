@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Core;
 
 use App\Models\User;
+use App\Support\PermissionCatalog;
 use PDO;
 
 final class Auth
@@ -132,7 +133,7 @@ final class Auth
         self::requireLogin();
 
         if (!self::can($permissionCode)) {
-            self::forbidden();
+            self::forbidden([$permissionCode]);
         }
     }
 
@@ -141,7 +142,7 @@ final class Auth
         self::requireLogin();
 
         if (!self::canAny($permissionCodes)) {
-            self::forbidden();
+            self::forbidden($permissionCodes);
         }
     }
 
@@ -246,6 +247,12 @@ final class Auth
     private static function legacyPermission(string $permissionCode): ?string
     {
         return [
+            'dashboard.block.door' => 'dashboard.view',
+            'dashboard.block.inside' => 'dashboard.view',
+            'dashboard.block.activity' => 'dashboard.view',
+            'dashboard.block.stats' => 'dashboard.view',
+            'dashboard.block.verifications' => 'dashboard.view',
+            'dashboard.view_settings' => 'dashboard.view',
             'visitors.manage' => 'users.manage',
             'watchlist.manage' => 'users.manage',
             'notification_rules.manage' => 'notifications.manage',
@@ -271,10 +278,13 @@ final class Auth
         );
     }
 
-    private static function forbidden(): never
+    private static function forbidden(array $requiredPermissions = []): never
     {
         http_response_code(403);
-        echo view('errors/403', ['title' => 'Yetkisiz Erişim']);
+        echo view('errors/403', [
+            'title' => 'Yetkisiz Erişim',
+            'permissionAdvice' => PermissionCatalog::advice($requiredPermissions),
+        ]);
         exit;
     }
 }

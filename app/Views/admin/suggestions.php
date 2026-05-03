@@ -7,6 +7,7 @@ $typeOptions = $typeOptions ?? [];
 $priorityOptions = $priorityOptions ?? [];
 $statusOptions = $statusOptions ?? [];
 $filters = $filters ?? ['status' => '', 'type' => ''];
+$hasSuggestionFilters = (($filters['status'] ?? '') !== '') || (($filters['type'] ?? '') !== '');
 $statusClasses = [
     'new' => 'warning',
     'reviewing' => 'ok',
@@ -15,7 +16,13 @@ $statusClasses = [
 ];
 ?>
 <section class="admin-layout single">
-  <form class="panel-card wide" method="get" action="/index.php">
+  <form
+    class="panel-card wide section-filter-card"
+    method="get"
+    action="/index.php"
+    data-section-filter="admin-suggestions-filter"
+    data-persist-filter-form="admin-suggestions"
+  >
     <input type="hidden" name="route" value="/admin/suggestions">
     <div class="section-head">
       <div>
@@ -23,33 +30,48 @@ $statusClasses = [
         <h1>Kullanıcı Önerileri</h1>
         <p class="muted">Üst menüdeki Öneri Yap penceresinden gelen fikirleri burada takip edebilirsiniz.</p>
       </div>
-      <a class="dark-button" href="<?= e(route('/admin')) ?>">Yönetime Dön</a>
+      <div class="section-actions">
+        <button
+          class="filter-menu-toggle <?= $hasSuggestionFilters ? 'has-active-filter' : '' ?>"
+          type="button"
+          data-section-filter-toggle
+          aria-controls="admin-suggestions-filter-panel"
+          aria-expanded="false"
+          title="Filtreleri göster"
+        >
+          <span class="filter-glyph" aria-hidden="true"><i></i></span>
+          <span data-filter-label>Filtre</span>
+        </button>
+        <a class="dark-button" href="<?= e(route('/admin')) ?>">Yönetime Dön</a>
+      </div>
     </div>
 
-    <div class="split-fields">
-      <label>
-        Durum
-        <select name="status">
-          <option value="">Tümü</option>
-          <?php foreach ($statusOptions as $code => $label): ?>
-            <option value="<?= e($code) ?>" <?= ($filters['status'] ?? '') === $code ? 'selected' : '' ?>><?= e($label) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </label>
-      <label>
-        Tür
-        <select name="type">
-          <option value="">Tümü</option>
-          <?php foreach ($typeOptions as $code => $label): ?>
-            <option value="<?= e($code) ?>" <?= ($filters['type'] ?? '') === $code ? 'selected' : '' ?>><?= e($label) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </label>
-    </div>
+    <div class="section-filter-panel embedded" id="admin-suggestions-filter-panel" data-section-filter-panel hidden>
+      <div class="split-fields">
+        <label>
+          Durum
+          <select name="status">
+            <option value="">Tümü</option>
+            <?php foreach ($statusOptions as $code => $label): ?>
+              <option value="<?= e($code) ?>" <?= ($filters['status'] ?? '') === $code ? 'selected' : '' ?>><?= e($label) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label>
+          Tür
+          <select name="type">
+            <option value="">Tümü</option>
+            <?php foreach ($typeOptions as $code => $label): ?>
+              <option value="<?= e($code) ?>" <?= ($filters['type'] ?? '') === $code ? 'selected' : '' ?>><?= e($label) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+      </div>
 
-    <div class="form-actions">
-      <button class="primary-action" type="submit">Filtrele</button>
-      <a class="ghost-link" href="<?= e(route('/admin/suggestions')) ?>">Temizle</a>
+      <div class="form-actions">
+        <button class="primary-action" type="submit">Filtrele</button>
+        <a class="ghost-link" href="<?= e(route('/admin/suggestions')) ?>" data-clear-persisted-filter="admin-suggestions">Temizle</a>
+      </div>
     </div>
   </form>
 

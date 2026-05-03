@@ -10,6 +10,7 @@ $departments = $departments ?? [];
 $statusLabels = $statusLabels ?? [];
 $total = (int) ($total ?? 0);
 $pdfParams = array_filter($filters, fn ($value): bool => $value !== '' && $value !== 0 && $value !== null);
+$hasRecordFilters = (bool) $pdfParams;
 $canQuickAddWatchlist = Auth::can('watchlist.manage');
 $movementLabels = [
     'entry' => ['Giriş yaptı', 'ok'],
@@ -18,60 +19,83 @@ $movementLabels = [
 ?>
 <section class="admin-layout records-page">
   <div class="setup-stack">
-    <form class="panel-card" method="get" action="/index.php">
+    <form
+      class="panel-card section-filter-card"
+      method="get"
+      action="/index.php"
+      data-section-filter="admin-records-filter"
+      data-persist-filter-form="admin-records"
+    >
       <input type="hidden" name="route" value="/admin/records">
-      <p class="eyebrow">Kayıtlar</p>
-      <h1>Kayıt Filtrele</h1>
-      <p class="muted">Giriş çıkış kayıtlarını tarih, kategori, departman, durum ve arama metnine göre süzün.</p>
-
-      <div class="split-fields">
-        <label>
-          Başlangıç
-          <input name="date_from" type="date" value="<?= e($filters['date_from'] ?? '') ?>">
-        </label>
-        <label>
-          Bitiş
-          <input name="date_to" type="date" value="<?= e($filters['date_to'] ?? '') ?>">
-        </label>
+      <div class="section-filter-card-head">
+        <div>
+          <p class="eyebrow">Kayıtlar</p>
+          <h1>Kayıt Filtrele</h1>
+          <p class="muted">Giriş çıkış kayıtlarını tarih, kategori, departman, durum ve arama metnine göre süzün.</p>
+        </div>
+        <button
+          class="filter-menu-toggle <?= $hasRecordFilters ? 'has-active-filter' : '' ?>"
+          type="button"
+          data-section-filter-toggle
+          aria-controls="admin-records-filter-panel"
+          aria-expanded="false"
+          title="Filtreleri göster"
+        >
+          <span class="filter-glyph" aria-hidden="true"><i></i></span>
+          <span data-filter-label>Filtre</span>
+        </button>
       </div>
 
-      <label>
-        Kategori
-        <select name="category_id">
-          <option value="">Tümü</option>
-          <?php foreach ($categories as $category): ?>
-            <option value="<?= e($category['id']) ?>" <?= (int) ($filters['category_id'] ?? 0) === (int) $category['id'] ? 'selected' : '' ?>><?= e($category['name']) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </label>
+      <div class="section-filter-panel embedded" id="admin-records-filter-panel" data-section-filter-panel hidden>
+        <div class="split-fields">
+          <label>
+            Başlangıç
+            <input name="date_from" type="date" value="<?= e($filters['date_from'] ?? '') ?>">
+          </label>
+          <label>
+            Bitiş
+            <input name="date_to" type="date" value="<?= e($filters['date_to'] ?? '') ?>">
+          </label>
+        </div>
 
-      <label>
-        Departman
-        <select name="department_id">
-          <option value="">Tümü</option>
-          <?php foreach ($departments as $department): ?>
-            <option value="<?= e($department['id']) ?>" <?= (int) ($filters['department_id'] ?? 0) === (int) $department['id'] ? 'selected' : '' ?>><?= e($department['name']) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </label>
+        <label>
+          Kategori
+          <select name="category_id">
+            <option value="">Tümü</option>
+            <?php foreach ($categories as $category): ?>
+              <option value="<?= e($category['id']) ?>" <?= (int) ($filters['category_id'] ?? 0) === (int) $category['id'] ? 'selected' : '' ?>><?= e($category['name']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
 
-      <label>
-        Durum
-        <select name="status">
-          <?php foreach ($statusLabels as $status => $label): ?>
-            <option value="<?= e($status) ?>" <?= (string) ($filters['status'] ?? '') === (string) $status ? 'selected' : '' ?>><?= e($label) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </label>
+        <label>
+          Departman
+          <select name="department_id">
+            <option value="">Tümü</option>
+            <?php foreach ($departments as $department): ?>
+              <option value="<?= e($department['id']) ?>" <?= (int) ($filters['department_id'] ?? 0) === (int) $department['id'] ? 'selected' : '' ?>><?= e($department['name']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
 
-      <label>
-        Arama
-        <input name="search" value="<?= e($filters['search'] ?? '') ?>" placeholder="Ad, telefon, firma, plaka, not">
-      </label>
+        <label>
+          Durum
+          <select name="status">
+            <?php foreach ($statusLabels as $status => $label): ?>
+              <option value="<?= e($status) ?>" <?= (string) ($filters['status'] ?? '') === (string) $status ? 'selected' : '' ?>><?= e($label) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
 
-      <div class="form-actions">
-        <button class="primary-action" type="submit">Filtrele</button>
-        <a class="ghost-link" href="<?= e(route('/admin/records')) ?>">Temizle</a>
+        <label>
+          Arama
+          <input name="search" value="<?= e($filters['search'] ?? '') ?>" placeholder="Ad, telefon, firma, plaka, not">
+        </label>
+
+        <div class="form-actions">
+          <button class="primary-action" type="submit">Filtrele</button>
+          <a class="ghost-link" href="<?= e(route('/admin/records')) ?>" data-clear-persisted-filter="admin-records">Temizle</a>
+        </div>
       </div>
     </form>
 

@@ -124,14 +124,15 @@ final class DepartmentVerification
              WHERE dv.id = :id
                AND dv.answer IS NULL
                AND (
-                    dv.sent_to_user_id = :user_id
-                    OR (dv.escalation_level = 0 AND d.manager_user_id = :user_id)
+                    dv.sent_to_user_id = :sent_to_user_id
+                    OR (dv.escalation_level = 0 AND d.manager_user_id = :manager_user_id)
                )
              LIMIT 1'
         );
         $stmt->execute([
             'id' => $verificationId,
-            'user_id' => $userId,
+            'sent_to_user_id' => $userId,
+            'manager_user_id' => $userId,
         ]);
         $verification = $stmt->fetch(PDO::FETCH_ASSOC);
 

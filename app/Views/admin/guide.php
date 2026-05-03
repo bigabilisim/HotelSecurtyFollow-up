@@ -50,7 +50,9 @@ $sections = [
             'Kullanıcı bilgilerini girin.',
             'Rol veya rolleri seçin.',
             'Günlük, haftalık ve aylık rapor tiklerini ihtiyaca göre açın.',
+            'Telefon / Web Push bildirimini aktif ederek giriş ve çıkış bildirimlerini ayrı ayrı seçin.',
             'Yönetim ekranı panellerinde kullanıcının göreceği alanları işaretleyin.',
+            'Yeni kullanıcı kaydedildiğinde giriş bilgileri e-posta ile gönderilir.',
         ],
     ],
     [
@@ -60,21 +62,39 @@ $sections = [
         'steps' => [
             'Kanalı aktif hale getirin.',
             'Gerekli hesap, token veya SMTP bilgilerini girin.',
+            'WhatsApp için Meta Cloud API seçiliyken API versiyonu, kalıcı Access Token ve WhatsApp Business Account ID yazın.',
+            'Entegrasyonu Tamamla butonu Meta Graph API bağlantısını kurar, bağlı numarayı bulur ve Phone Number ID değerini kaydeder.',
+            'Bağlantı tamamlanınca doğrulanmış ad, gönderici numara, kalite ve platform bilgilerini ekrandan kontrol edin.',
             'Kaydetmeden sonra test gönderimi yapın.',
         ],
     ],
     [
-        'title' => '7. Bildirim Kuralları',
+        'title' => '7. Telefon ve Web Push Bildirimleri',
+        'image' => '05-users-permissions.png',
+        'text' => 'Yetki verilen kullanıcıların telefon veya bilgisayar tarayıcısından yeni giriş ve çıkış bildirimi alması bu akışla çalışır.',
+        'steps' => [
+            'Yönetim > Kullanıcı ve Yetki Yönetimi ekranında kullanıcı için Web Push bildirimini aktif edin.',
+            'İçeri giriş ve çıkış bildirim tiklerini kullanıcının sorumluluğuna göre açın.',
+            'Kullanıcı sisteme giriş yaptığında ekrandaki Telefon bildirimleri uyarısından İzin Ver seçeneğine basmalıdır.',
+            'iPhone veya iPad kullanılıyorsa site önce Safari içinden Paylaş > Ana Ekrana Ekle ile kurulmalı, sonra ana ekran ikonundan açılmalıdır.',
+            'Normal Safari sekmesinde açılırsa iPhone Web Push çalışmaz; sistem kullanıcıya ana ekrana ekleme uyarısı gösterir.',
+            'Bildirim izni reddedilmişse cihaz veya tarayıcı ayarlarından izin tekrar açılmalıdır.',
+            'Gerçek Web Push desteklenmeyen cihazlarda panel açık olduğu sürece bildirim yedeği çalışmaya devam eder.',
+        ],
+    ],
+    [
+        'title' => '8. Bildirim Kuralları',
         'image' => '07-notification-rules.png',
         'text' => 'Hangi olayda kime, hangi kanaldan bildirim gönderileceği bu panelde belirlenir.',
         'steps' => [
             'Olay tipini ve kategoriyi seçin.',
             'Kanal ve alıcı bilgilerini belirleyin.',
             'Eskalasyon cevap gelmezse sıradaki amire geçer.',
+            'Evet / Hayır cevapları mailde buton, Telegramda inline buton, WhatsApp mesajında güvenli cevap linki olarak gönderilir.',
         ],
     ],
     [
-        'title' => '8. Mail Şablonları',
+        'title' => '9. Mail Şablonları',
         'image' => '08-mail-templates.png',
         'text' => 'Giden maillerin konu ve içerikleri basic kullanıcıların da rahat düzenleyebileceği şekilde hazırlanır.',
         'steps' => [
@@ -84,7 +104,7 @@ $sections = [
         ],
     ],
     [
-        'title' => '9. Kayıt Listesi ve PDF',
+        'title' => '10. Kayıt Listesi ve PDF',
         'image' => '09-records.png',
         'text' => 'Giriş çıkış kayıtları filtrelenir, PDF alınır veya mail ile gönderilir.',
         'steps' => [
@@ -94,7 +114,7 @@ $sections = [
         ],
     ],
     [
-        'title' => '10. Planlı Raporlar',
+        'title' => '11. Planlı Raporlar',
         'image' => '10-reports.png',
         'text' => 'Günlük, haftalık ve aylık rapor planları buradan yönetilir.',
         'steps' => [
@@ -104,7 +124,7 @@ $sections = [
         ],
     ],
     [
-        'title' => '11. Kara / Uyarı Listesi',
+        'title' => '12. Kara / Uyarı Listesi',
         'image' => '11-watchlist.png',
         'text' => 'Riskli veya dikkat gerektiren kişiler ad, telefon veya plaka eşleşmesine göre takip edilir.',
         'steps' => [
@@ -114,7 +134,7 @@ $sections = [
         ],
     ],
     [
-        'title' => '12. Yedekleme',
+        'title' => '13. Yedekleme',
         'image' => '12-backups.png',
         'text' => 'Otomatik yedekleme, manuel yedek alma, yedek geçmişi ve indirme işlemleri bu panelden yapılır.',
         'steps' => [
@@ -124,13 +144,48 @@ $sections = [
         ],
     ],
     [
-        'title' => '13. Kurulum Sihirbazı',
+        'title' => '14. Kurulum Sihirbazı',
         'image' => '13-setup.png',
         'text' => 'İlk kurulumda SQL bilgileri ve ilk admin hesabı girilerek sistem otomatik hazırlanır.',
         'steps' => [
             'SQL bağlantı bilgilerini girin.',
             'İlk admin kullanıcısını oluşturun.',
             'Sistem kurulduktan sonra bu ekran sadece yetkili yöneticilere açık kalmalıdır.',
+        ],
+    ],
+    [
+        'title' => '15. Günlük Operasyon Akışı',
+        'text' => 'Güvenlik görevlisi için önerilen günlük kullanım sırası bu şekildedir.',
+        'steps' => [
+            'Sisteme giriş yapın ve canlı paneli açık tutun.',
+            'Gelen kişi için kategori, randevu durumu ve kişi bilgilerini girerek giriş kaydı oluşturun.',
+            'Kara liste uyarısı çıkarsa uyarıyı okuyup amire bilgi verin.',
+            'İçeride olanlar listesinden süre aşımı ve departman onay durumlarını takip edin.',
+            'Kişi ayrıldığında Detay ile bilgileri kontrol edip çıkış kaydı oluşturun.',
+            'Gün sonunda kayıt listesi veya rapor ekranından kayıtları kontrol edin.',
+        ],
+    ],
+    [
+        'title' => '16. Yönetici Kontrol Listesi',
+        'text' => 'Yöneticiler belirli aralıklarla aşağıdaki ayarları kontrol etmelidir.',
+        'steps' => [
+            'Kategoriler, departmanlar ve amirler doğru mu?',
+            'Kullanıcı rolleri, panel yetkileri ve Web Push tikleri doğru mu?',
+            'Mail, Telegram ve WhatsApp kanalları test edildi mi?',
+            'WhatsApp Meta bağlantısında doğrulanmış ad ve Phone Number ID görünüyor mu?',
+            'Eskalasyon zinciri ve cevap bekleme süreleri doğru sırada mı?',
+            'Mail şablonları, rapor alıcıları ve yedekleme planı güncel mi?',
+        ],
+    ],
+    [
+        'title' => '17. Önemli Notlar',
+        'text' => 'Canlı kullanımda dikkat edilmesi gereken genel kurallar.',
+        'steps' => [
+            'Canlıya alınacak her yeni sürüm için sürüm adı ayrıca belirtilmelidir.',
+            'DB değişikliği olacaksa canlıya almadan önce yöneticiden onay alınmalıdır.',
+            'Yeni geliştirmeler önce test ortamında denenmelidir.',
+            'iPhone Web Push için uygulama mutlaka ana ekran ikonundan açılmalıdır.',
+            'Mail sağlayıcısı spam reddi verirse uygulama gönderimi denemiş olur; SMTP veya mail itibarı ayrıca kontrol edilmelidir.',
         ],
     ],
 ];
@@ -141,8 +196,8 @@ $backLabel = $backLabel ?? 'Yönetim ekranına dön';
 <section class="admin-hero">
   <div>
     <p class="eyebrow">Yardım</p>
-    <h1>V1 Kullanım Kılavuzu</h1>
-    <p class="muted">Güvenlik ve yönetim ekipleri için ekran görüntülü hızlı kullanım rehberi.</p>
+    <h1>V1.12 Kullanım Kılavuzu</h1>
+    <p class="muted">Güvenlik ve yönetim ekipleri için güncel ekran görüntülü hızlı kullanım rehberi.</p>
   </div>
   <div class="admin-hero-actions">
     <a class="dark-button" href="<?= e(route($backRoute)) ?>"><?= e($backLabel) ?></a>
@@ -165,18 +220,20 @@ $backLabel = $backLabel ?? 'Yönetim ekranına dön';
       <article class="panel-card guide-section" id="guide-section-<?= e($index + 1) ?>">
         <div class="section-head">
           <div>
-            <p class="eyebrow">V1</p>
+            <p class="eyebrow">V1.12</p>
             <h2><?= e($section['title']) ?></h2>
             <p class="muted"><?= e($section['text']) ?></p>
           </div>
         </div>
 
-        <img
-          class="guide-image"
-          src="/assets/guide/v1/<?= e($section['image']) ?>"
-          alt="<?= e($section['title']) ?> ekran görüntüsü"
-          loading="lazy"
-        >
+        <?php if (!empty($section['image'])): ?>
+          <img
+            class="guide-image"
+            src="/assets/guide/v1/<?= e($section['image']) ?>"
+            alt="<?= e($section['title']) ?> ekran görüntüsü"
+            loading="lazy"
+          >
+        <?php endif; ?>
 
         <ol class="guide-steps">
           <?php foreach ($section['steps'] as $step): ?>

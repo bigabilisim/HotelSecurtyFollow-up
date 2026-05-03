@@ -11,7 +11,7 @@ $stats = $stats ?? [];
     <span>İçeride</span>
     <strong><?= e($stats['inside'] ?? 0) ?></strong>
   </article>
-  <article class="metric danger">
+  <article class="metric overdue">
     <span>Süre Aşımı</span>
     <strong><?= e($stats['overdue'] ?? 0) ?></strong>
   </article>

@@ -49,6 +49,7 @@ FROM roles r
 JOIN permissions p ON p.code IN (
   'dashboard.view',
   'visits.view_all',
+  'visits.department_verify',
   'reports.view',
   'notifications.manage',
   'notification_rules.manage',
@@ -63,6 +64,7 @@ FROM roles r
 JOIN permissions p ON p.code IN (
   'dashboard.view',
   'visits.view_all',
+  'visits.department_verify',
   'reports.view',
   'notifications.manage',
   'notification_rules.manage',
@@ -78,6 +80,7 @@ FROM roles r
 JOIN permissions p ON p.code IN (
   'dashboard.view',
   'visits.view_all',
+  'visits.department_verify',
   'reports.view',
   'departments.manage',
   'notifications.manage',
@@ -182,7 +185,7 @@ ON DUPLICATE KEY UPDATE
 INSERT INTO notification_channels (code, name, is_enabled, config_json) VALUES
   ('mail', 'Mail', 1, '{"driver":"php_mail","configured":false,"from_email":"security@hotel.local","from_name":"Otel Güvenlik"}'),
   ('telegram', 'Telegram', 1, '{"driver":"telegram_bot_api","configured":false,"bot_token":"","parse_mode":""}'),
-  ('whatsapp', 'WhatsApp', 1, '{"driver":"whatsapp_provider","configured":false,"provider":"meta_cloud","api_version":"v20.0","phone_number_id":"","access_token":"","endpoint":""}')
+  ('whatsapp', 'WhatsApp', 1, '{"driver":"whatsapp_provider","configured":false,"provider":"meta_cloud","api_version":"v25.0","business_id":"","display_phone_number":"","phone_number_id":"","access_token":"","endpoint":"","wizard_completed_at":"","meta_connection":{},"discovered_phone_numbers":[]}')
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
   is_enabled = VALUES(is_enabled),

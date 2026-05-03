@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Core\Database;
+use App\Support\PermissionCatalog;
 use PDO;
 
 final class User
@@ -30,6 +31,7 @@ final class User
                 u.mobile_notification_enabled,
                 u.mobile_notification_entry_enabled,
                 u.mobile_notification_exit_enabled,
+                u.mobile_notification_department_enabled,
                 u.status,
                 d.name AS department_name,
                 GROUP_CONCAT(r.name ORDER BY r.name SEPARATOR ", ") AS role_names
@@ -51,6 +53,7 @@ final class User
                 u.mobile_notification_enabled,
                 u.mobile_notification_entry_enabled,
                 u.mobile_notification_exit_enabled,
+                u.mobile_notification_department_enabled,
                 u.status,
                 d.name
              ORDER BY u.status, u.full_name'
@@ -224,6 +227,7 @@ final class User
                          mobile_notification_enabled = :mobile_notification_enabled,
                          mobile_notification_entry_enabled = :mobile_notification_entry_enabled,
                          mobile_notification_exit_enabled = :mobile_notification_exit_enabled,
+                         mobile_notification_department_enabled = :mobile_notification_department_enabled,
                          status = :status' . $passwordSql . '
                      WHERE id = :id AND deleted_at IS NULL'
                 );
@@ -241,6 +245,7 @@ final class User
                     'mobile_notification_enabled' => !empty($data['mobile_notification_enabled']) ? 1 : 0,
                     'mobile_notification_entry_enabled' => !empty($data['mobile_notification_entry_enabled']) ? 1 : 0,
                     'mobile_notification_exit_enabled' => !empty($data['mobile_notification_exit_enabled']) ? 1 : 0,
+                    'mobile_notification_department_enabled' => !empty($data['mobile_notification_department_enabled']) ? 1 : 0,
                     'status' => $data['status'] ?: 'active',
                 ];
 
@@ -264,7 +269,8 @@ final class User
                         report_monthly_enabled,
                         mobile_notification_enabled,
                         mobile_notification_entry_enabled,
-                        mobile_notification_exit_enabled
+                        mobile_notification_exit_enabled,
+                        mobile_notification_department_enabled
                     )
                  VALUES (
                     :department_id,
@@ -279,7 +285,8 @@ final class User
                     :report_monthly_enabled,
                     :mobile_notification_enabled,
                     :mobile_notification_entry_enabled,
-                    :mobile_notification_exit_enabled
+                    :mobile_notification_exit_enabled,
+                    :mobile_notification_department_enabled
                  )
                  ON DUPLICATE KEY UPDATE
                     department_id = VALUES(department_id),
@@ -293,6 +300,7 @@ final class User
                     mobile_notification_enabled = VALUES(mobile_notification_enabled),
                     mobile_notification_entry_enabled = VALUES(mobile_notification_entry_enabled),
                     mobile_notification_exit_enabled = VALUES(mobile_notification_exit_enabled),
+                    mobile_notification_department_enabled = VALUES(mobile_notification_department_enabled),
                     status = VALUES(status),
                     password_hash = VALUES(password_hash),
                     deleted_at = NULL'
@@ -311,6 +319,7 @@ final class User
                     'mobile_notification_enabled' => !empty($data['mobile_notification_enabled']) ? 1 : 0,
                     'mobile_notification_entry_enabled' => !empty($data['mobile_notification_entry_enabled']) ? 1 : 0,
                     'mobile_notification_exit_enabled' => !empty($data['mobile_notification_exit_enabled']) ? 1 : 0,
+                    'mobile_notification_department_enabled' => !empty($data['mobile_notification_department_enabled']) ? 1 : 0,
                 ]);
 
                 $userId = (int) $pdo->lastInsertId();
@@ -424,73 +433,7 @@ final class User
 
     public function panelPermissionOptions(): array
     {
-        return [
-            [
-                'code' => 'categories.manage',
-                'label' => 'Kategoriler',
-                'description' => 'Kategori tanımlama ve süre ayarları.',
-            ],
-            [
-                'code' => 'departments.manage',
-                'label' => 'Departmanlar',
-                'description' => 'Departman ve amir bilgileri.',
-            ],
-            [
-                'code' => 'users.manage',
-                'label' => 'Kullanıcılar',
-                'description' => 'Kullanıcı, rol ve yetki yönetimi.',
-            ],
-            [
-                'code' => 'visitors.manage',
-                'label' => 'Kayıtlı Kişiler',
-                'description' => 'Tekrar gelen kişi kartları.',
-            ],
-            [
-                'code' => 'watchlist.manage',
-                'label' => 'Kara / Uyarı Listesi',
-                'description' => 'Kara liste ve uyarı listesi.',
-            ],
-            [
-                'code' => 'notification_rules.manage',
-                'label' => 'Bildirim Kuralları',
-                'description' => 'Kategori ve olay bazlı bildirim kuralları.',
-            ],
-            [
-                'code' => 'mail_templates.manage',
-                'label' => 'Mail Şablonları',
-                'description' => 'Mail konu ve gövde şablonları.',
-            ],
-            [
-                'code' => 'notification_channels.manage',
-                'label' => 'Kanal Ayarları',
-                'description' => 'Mail, Telegram ve WhatsApp ayarları.',
-            ],
-            [
-                'code' => 'reports.manage',
-                'label' => 'Planlı Raporlar',
-                'description' => 'Rapor planı oluşturma ve çalıştırma.',
-            ],
-            [
-                'code' => 'reports.view',
-                'label' => 'Kayıt Listesi',
-                'description' => 'Giriş çıkış kayıtları, filtre ve PDF.',
-            ],
-            [
-                'code' => 'backups.manage',
-                'label' => 'Yedekleme',
-                'description' => 'Yedek alma, indirme ve plan yönetimi.',
-            ],
-            [
-                'code' => 'suggestions.manage',
-                'label' => 'Kullanıcı Önerileri',
-                'description' => 'Personel önerilerini görüntüleme ve durum takibi.',
-            ],
-            [
-                'code' => 'settings.manage',
-                'label' => 'Kurulum / Sistem',
-                'description' => 'Kurulum ekranı ve global eskalasyon zinciri.',
-            ],
-        ];
+        return PermissionCatalog::userPermissionOptions();
     }
 
     public function ensureReportColumns(): void
@@ -509,6 +452,7 @@ final class User
             'mobile_notification_enabled' => 'ALTER TABLE users ADD COLUMN mobile_notification_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER report_monthly_enabled',
             'mobile_notification_entry_enabled' => 'ALTER TABLE users ADD COLUMN mobile_notification_entry_enabled TINYINT(1) NOT NULL DEFAULT 1 AFTER mobile_notification_enabled',
             'mobile_notification_exit_enabled' => 'ALTER TABLE users ADD COLUMN mobile_notification_exit_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER mobile_notification_entry_enabled',
+            'mobile_notification_department_enabled' => 'ALTER TABLE users ADD COLUMN mobile_notification_department_enabled TINYINT(1) NOT NULL DEFAULT 1 AFTER mobile_notification_exit_enabled',
         ];
 
         foreach ($definitions as $column => $sql) {
@@ -617,6 +561,12 @@ final class User
     private function legacyPanelPermission(string $permissionCode): ?string
     {
         return [
+            'dashboard.block.door' => 'dashboard.view',
+            'dashboard.block.inside' => 'dashboard.view',
+            'dashboard.block.activity' => 'dashboard.view',
+            'dashboard.block.stats' => 'dashboard.view',
+            'dashboard.block.verifications' => 'dashboard.view',
+            'dashboard.view_settings' => 'dashboard.view',
             'visitors.manage' => 'users.manage',
             'watchlist.manage' => 'users.manage',
             'notification_rules.manage' => 'notifications.manage',

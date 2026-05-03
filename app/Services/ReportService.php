@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Core\Database;
 use App\Models\Report;
+use App\Models\ReportTemplate;
 use App\Models\User;
 use App\Services\Notifications\NotificationService;
 use PDO;
@@ -223,20 +224,18 @@ final class ReportService
         $categoryRows = $this->tableRows($data['categories']);
         $departmentRows = $this->tableRows($data['departments']);
 
-        return '<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>' .
-            $this->escape($schedule['name']) .
-            '</title><style>body{font-family:Arial,sans-serif;color:#18211f;margin:28px}h1{margin-bottom:4px}.muted{color:#66706d}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}.metric{border:1px solid #d9ded5;border-radius:8px;padding:12px}.metric strong{display:block;font-size:28px}table{border-collapse:collapse;width:100%;margin-top:12px}th,td{border:1px solid #d9ded5;padding:8px;text-align:left}th{background:#eef2e8}</style></head><body><h1>' .
-            $this->escape($schedule['name']) .
-            '</h1><p class="muted">Dönem: ' . $this->escape($periodStart) . ' - ' . $this->escape($periodEnd) .
-            '</p><section class="grid"><div class="metric"><span>Giriş</span><strong>' . (int) ($counts['total_entries'] ?? 0) .
-            '</strong></div><div class="metric"><span>Çıkış</span><strong>' . (int) ($counts['total_exits'] ?? 0) .
-            '</strong></div><div class="metric"><span>İçeride</span><strong>' . (int) ($counts['still_inside'] ?? 0) .
-            '</strong></div><div class="metric"><span>Süre Aşımı</span><strong>' . (int) ($counts['overdue_count'] ?? 0) .
-            '</strong></div></section><h2>Kategori Dağılımı</h2><table><tr><th>Kategori</th><th>Adet</th></tr>' .
-            $categoryRows .
-            '</table><h2>Departman Dağılımı</h2><table><tr><th>Departman</th><th>Adet</th></tr>' .
-            $departmentRows .
-            '</table></body></html>';
+        return (new ReportTemplate())->render((string) $schedule['report_type'], [
+            'report_name' => $this->escape((string) $schedule['name']),
+            'period_start' => $this->escape($periodStart),
+            'period_end' => $this->escape($periodEnd),
+            'generated_at' => $this->escape(date('d.m.Y H:i')),
+            'total_entries' => (string) ((int) ($counts['total_entries'] ?? 0)),
+            'total_exits' => (string) ((int) ($counts['total_exits'] ?? 0)),
+            'still_inside' => (string) ((int) ($counts['still_inside'] ?? 0)),
+            'overdue_count' => (string) ((int) ($counts['overdue_count'] ?? 0)),
+            'category_rows' => $categoryRows,
+            'department_rows' => $departmentRows,
+        ]);
     }
 
     private function tableRows(array $rows): string

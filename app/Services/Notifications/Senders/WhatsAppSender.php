@@ -74,10 +74,12 @@ final class WhatsAppSender implements NotificationSenderInterface
         if (($config['provider'] ?? '') === 'meta_cloud' || !empty($config['phone_number_id'])) {
             return [
                 'messaging_product' => 'whatsapp',
-                'to' => (string) $notification['recipient_address'],
+                'recipient_type' => 'individual',
+                'to' => $this->normalizeRecipient((string) $notification['recipient_address']),
                 'type' => 'text',
                 'text' => [
                     'body' => $this->messageWithActions($notification),
+                    'preview_url' => false,
                 ],
             ];
         }
@@ -106,6 +108,25 @@ final class WhatsAppSender implements NotificationSenderInterface
     {
         return trim((string) ($notification['action_yes_url'] ?? '')) !== ''
             && trim((string) ($notification['action_no_url'] ?? '')) !== '';
+    }
+
+    private function normalizeRecipient(string $value): string
+    {
+        $digits = preg_replace('/\D+/', '', $value) ?: '';
+
+        if (str_starts_with($digits, '00')) {
+            $digits = substr($digits, 2);
+        }
+
+        if (str_starts_with($digits, '0') && strlen($digits) === 11) {
+            return '90' . substr($digits, 1);
+        }
+
+        if (strlen($digits) === 10 && str_starts_with($digits, '5')) {
+            return '90' . $digits;
+        }
+
+        return $digits !== '' ? $digits : trim($value);
     }
 
     private function skipped(string $message): array

@@ -3,6 +3,9 @@
 use App\Core\Csrf;
 
 $templates = $templates ?? [];
+$settings = $settings ?? [];
+$lastTestRecipientEmail = (string) ($settings['test_mail.last_recipient_email'] ?? '');
+$lastTestRecipientName = (string) ($settings['test_mail.last_recipient_name'] ?? '');
 $descriptions = [
     'entry' => 'Bir kişi otele giriş yaptığında gönderilir.',
     'exit' => 'Bir kişi otelden çıkış yaptığında gönderilir.',
@@ -36,7 +39,12 @@ $placeholders = [
     '{period_end}' => 'Rapor bitişi',
     '{file_path}' => 'Rapor dosyası',
 ];
+$grapesCssVersion = is_file(BASE_PATH . '/public/assets/vendor/grapesjs/grapes.min.css') ? (string) filemtime(BASE_PATH . '/public/assets/vendor/grapesjs/grapes.min.css') : '1';
+$grapesJsVersion = is_file(BASE_PATH . '/public/assets/vendor/grapesjs/grapes.min.js') ? (string) filemtime(BASE_PATH . '/public/assets/vendor/grapesjs/grapes.min.js') : '1';
+$grapesIntegrationVersion = is_file(BASE_PATH . '/public/assets/grapesjs-integration.js') ? (string) filemtime(BASE_PATH . '/public/assets/grapesjs-integration.js') : '1';
 ?>
+<link rel="stylesheet" href="/assets/vendor/grapesjs/grapes.min.css?v=<?= e($grapesCssVersion) ?>">
+
 <section class="admin-layout single mail-template-page">
   <form class="panel-card wide" method="post" action="<?= e(route('/admin/mail-templates')) ?>">
     <?= Csrf::field() ?>
@@ -64,6 +72,21 @@ $placeholders = [
       </div>
     </div>
 
+    <div class="test-mail-panel">
+      <div>
+        <strong>Test mail alıcısı</strong>
+        <span>Şablonları kaydetmeden önce seçtiğiniz şablonu örnek verilerle bu adrese gönderebilirsiniz. Son kullanılan adres otomatik kalır.</span>
+      </div>
+      <label>
+        E-posta
+        <input name="test_recipient_email" type="email" value="<?= e($lastTestRecipientEmail) ?>" placeholder="ornek@otel.com">
+      </label>
+      <label>
+        Alıcı adı
+        <input name="test_recipient_name" value="<?= e($lastTestRecipientName) ?>" placeholder="Test Alıcısı">
+      </label>
+    </div>
+
     <div class="token-list" aria-label="Şablon alanları">
       <?php foreach ($placeholders as $placeholder => $placeholderLabel): ?>
         <button type="button" data-template-token="<?= e($placeholder) ?>">
@@ -89,14 +112,40 @@ $placeholders = [
           </label>
           <label>
             Gövde
-            <span>Mail içinde okunacak açıklama metni. Satır satır yazabilirsiniz.</span>
-            <textarea data-template-input name="templates[<?= e($template['event_type']) ?>][body]" rows="5"><?= e($template['body']) ?></textarea>
+            <span>Mail içinde okunacak açıklama metni. İsterseniz görsel editörle HTML tasarlayabilirsiniz.</span>
+            <textarea
+              id="mail-template-body-<?= e($template['event_type']) ?>"
+              data-template-input
+              name="templates[<?= e($template['event_type']) ?>][body]"
+              rows="5"
+            ><?= e($template['body']) ?></textarea>
+            <textarea
+              id="mail-template-css-<?= e($template['event_type']) ?>"
+              hidden
+              name="templates[<?= e($template['event_type']) ?>][css]"
+            ><?= e($template['css'] ?? '') ?></textarea>
+            <button
+              class="dark-button visual-editor-button"
+              type="button"
+              data-grapesjs-open
+              data-grapesjs-title="<?= e($template['label']) ?> Görsel Mail Editörü"
+              data-grapesjs-source="mail-template-body-<?= e($template['event_type']) ?>"
+              data-grapesjs-css="mail-template-css-<?= e($template['event_type']) ?>"
+            >Görsel Editör</button>
           </label>
         </div>
         <div class="mail-preview">
           <span>Mail Ön İzleme</span>
           <strong data-preview-subject></strong>
-          <p data-preview-body></p>
+          <div class="mail-preview-body" data-preview-body></div>
+        </div>
+        <div class="template-test-actions">
+          <button
+            class="ghost-link small-action"
+            type="submit"
+            name="test_template"
+            value="<?= e($template['event_type']) ?>"
+          >Bu Şablonu Test Mail Gönder</button>
         </div>
       </details>
     <?php endforeach; ?>
@@ -108,6 +157,40 @@ $placeholders = [
   </form>
 </section>
 
+<section class="visual-editor-overlay" data-grapesjs-modal hidden aria-hidden="true">
+  <div class="visual-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="visual-editor-title">
+    <div class="visual-editor-head">
+      <div>
+        <p class="eyebrow">GrapesJS</p>
+        <h1 id="visual-editor-title" data-grapesjs-title>Görsel Editör</h1>
+        <p class="muted">Blokları sürükleyin, metni düzenleyin ve değişken butonlarıyla otomatik alan ekleyin.</p>
+      </div>
+      <button class="ghost-link" type="button" data-grapesjs-close>Kapat</button>
+    </div>
+    <p class="flash warning" data-grapesjs-notice hidden></p>
+    <div class="visual-editor-grid">
+      <aside class="visual-editor-side">
+        <strong>Bloklar</strong>
+        <div data-grapesjs-blocks></div>
+      </aside>
+      <div class="visual-editor-canvas" data-grapesjs-root></div>
+      <aside class="visual-editor-side">
+        <strong>Stil</strong>
+        <div data-grapesjs-styles></div>
+        <div data-grapesjs-traits></div>
+        <div data-grapesjs-selectors></div>
+        <div data-grapesjs-layers></div>
+      </aside>
+    </div>
+    <div class="visual-editor-actions">
+      <button class="ghost-link" type="button" data-grapesjs-sync>Tasarımı Metne Aktar</button>
+      <button class="primary-action" type="button" data-grapesjs-apply>Uygula ve Kapat</button>
+    </div>
+  </div>
+</section>
+
+<script src="/assets/vendor/grapesjs/grapes.min.js?v=<?= e($grapesJsVersion) ?>"></script>
+<script src="/assets/grapesjs-integration.js?v=<?= e($grapesIntegrationVersion) ?>"></script>
 <script>
   (() => {
     const samples = {
@@ -150,7 +233,12 @@ $placeholders = [
       }
 
       if (bodyPreview && body) {
-        bodyPreview.textContent = render(body.value);
+        const rendered = render(body.value);
+        if (/<[a-z][\s\S]*>/i.test(rendered)) {
+          bodyPreview.innerHTML = rendered;
+        } else {
+          bodyPreview.textContent = rendered;
+        }
       }
     }
 
@@ -164,6 +252,9 @@ $placeholders = [
     document.querySelectorAll("[data-template-token]").forEach((button) => {
       button.addEventListener("click", () => {
         const token = button.dataset.templateToken || "";
+        if (window.hotelTemplateVisualEditors && window.hotelTemplateVisualEditors.insertToken(token)) {
+          return;
+        }
         const active = document.activeElement;
         const field = active && active.matches("[data-template-input]")
           ? active

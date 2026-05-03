@@ -26,10 +26,23 @@ spl_autoload_register(function (string $class): void {
 });
 
 $sessionName = config('app.session_name', 'hotel_security_session');
+$sessionLifetimeSeconds = max(86400, (int) config('app.session_lifetime_days', 365) * 86400);
+$isSecureRequest = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 date_default_timezone_set((string) config('app.timezone', 'Europe/Istanbul'));
 session_name($sessionName);
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
+    ini_set('session.gc_maxlifetime', (string) $sessionLifetimeSeconds);
+    ini_set('session.cookie_lifetime', (string) $sessionLifetimeSeconds);
+    session_set_cookie_params([
+        'lifetime' => $sessionLifetimeSeconds,
+        'path' => '/',
+        'domain' => '',
+        'secure' => $isSecureRequest,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
     session_start();
 }
 

@@ -31,6 +31,7 @@ final class MailTemplate
                 'label' => $label,
                 'subject' => $settings[$this->subjectKey($eventType)] ?? $default['subject'],
                 'body' => $settings[$this->bodyKey($eventType)] ?? $default['body'],
+                'css' => $settings[$this->cssKey($eventType)] ?? ($default['css'] ?? ''),
             ];
         }
 
@@ -45,6 +46,7 @@ final class MailTemplate
         return [
             'subject' => $settings[$this->subjectKey($eventType)] ?? $default['subject'],
             'body' => $settings[$this->bodyKey($eventType)] ?? $default['body'],
+            'css' => $settings[$this->cssKey($eventType)] ?? ($default['css'] ?? ''),
         ];
     }
 
@@ -56,9 +58,11 @@ final class MailTemplate
             $default = $this->defaultFor($eventType);
             $subject = trim((string) ($data[$eventType]['subject'] ?? ''));
             $body = trim((string) ($data[$eventType]['body'] ?? ''));
+            $css = trim((string) ($data[$eventType]['css'] ?? ''));
 
             $settings[$this->subjectKey($eventType)] = $subject !== '' ? $subject : $default['subject'];
             $settings[$this->bodyKey($eventType)] = $body !== '' ? $body : $default['body'];
+            $settings[$this->cssKey($eventType)] = $css;
         }
 
         (new Settings())->setMany($settings);
@@ -118,5 +122,10 @@ final class MailTemplate
     private function bodyKey(string $eventType): string
     {
         return 'mail_template.' . $eventType . '.body';
+    }
+
+    private function cssKey(string $eventType): string
+    {
+        return 'mail_template.' . $eventType . '.css';
     }
 }

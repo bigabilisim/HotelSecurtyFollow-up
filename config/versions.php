@@ -1,8 +1,53 @@
 <?php
 
 return [
-    'current' => 'V1.9',
+    'current' => 'V1.12',
     'entries' => [
+        [
+            'version' => 'V1.12',
+            'date' => '2026-05-03',
+            'published_at' => '2026-05-03',
+            'title' => 'Safari Web Push ve mobil kullanım',
+            'summary' => 'iPhone/Safari Web Push uyarıları, PWA kurulum yardımı ve mobil canlı panel yerleşimi iyileştirildi.',
+            'items' => [
+                'iPhone Safari normal sekmesinde açıldığında kullanıcıya Ana Ekrana Ekle yönlendirmesi gösterilir.',
+                'HTTPS, service worker, Notification API ve PushManager eksikleri artık sessiz geçilmez; kullanıcıya anlaşılır uyarı çıkar.',
+                'Web Push aboneliği sunucuya kaydedilemezse hata ekranda gösterilir ve panel-açık bildirim yedeği çalışmaya devam eder.',
+                'Bildirim izni reddedilmiş cihazlarda ayarlardan izin açılması gerektiği net olarak bildirilir.',
+                'HEAD istekleri GET rotalarıyla eşleştirilerek manifest ve PWA kontrol istekleri daha uyumlu hale getirildi.',
+                'Kullanım kılavuzu WhatsApp entegrasyonu, Web Push ve Safari kurulum adımlarıyla güncellendi.',
+                'Mobil canlı panelde Kapı işlemleri en üst sıraya, ana menü ise alt sabit menüye alındı.',
+                'Ana menüye Uygulamayı Kur butonu eklendi; destekleyen tarayıcıda PWA kurulum penceresini, diğerlerinde kurulum yönergesini gösterir.',
+            ],
+        ],
+        [
+            'version' => 'V1.11',
+            'date' => '2026-05-02',
+            'published_at' => '2026-05-02',
+            'title' => 'Otomatik WhatsApp Meta bağlantısı',
+            'summary' => 'WhatsApp entegrasyonu Meta Graph API bağlantısıyla otomatik tamamlanır ve sonuç ekranda gösterilir.',
+            'items' => [
+                'Entegrasyonu Tamamla butonu Meta Graph API üzerinden WhatsApp Business Account ID ile bağlı telefonları okur.',
+                'Phone Number ID bilinmiyorsa sistem WABA içindeki uygun numarayı otomatik seçer ve kaydeder.',
+                'Phone Number ID girilmişse aynı buton numarayı Meta üzerinde doğrular ve bağlantıyı tamamlar.',
+                'Doğrulanmış ad, gönderici numara, Phone Number ID, kalite ve platform bilgileri kanal kartında kalıcı olarak gösterilir.',
+                'WhatsApp sihirbazı tarayıcı kontrolü WABA ID veya Phone Number ID senaryosuna göre eksik alanları akıllı şekilde bildirir.',
+            ],
+        ],
+        [
+            'version' => 'V1.10',
+            'date' => '2026-05-02',
+            'published_at' => '2026-05-02',
+            'title' => 'WhatsApp kurulum sihirbazı',
+            'summary' => 'WhatsApp Cloud API kurulumu kullanıcı dostu sihirbazla otomatikleştirildi.',
+            'items' => [
+                'Kanal Ayarları ekranındaki WhatsApp kartına adım adım kurulum sihirbazı eklendi.',
+                'Meta Cloud API endpointi API versiyonu ve Phone Number ID değerlerinden otomatik ön izlenir.',
+                'Sihirbazı Kaydet ve Aktifleştir butonu WhatsApp kanalını tek adımda aktif ve yapılandırılmış hale getirir.',
+                'Bağlantıyı Doğrula butonu Meta Graph API üzerinden Phone Number ID ve token uyumunu kontrol eder.',
+                'WhatsApp test ve canlı alıcı numaraları 05xx, +90 veya 90 formatlarından Meta gönderim formatına otomatik çevrilir.',
+            ],
+        ],
         [
             'version' => 'V1.9',
             'date' => '2026-05-02',

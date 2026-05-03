@@ -1,10 +1,10 @@
-# Otel Guvenlik Sistemi V1 Kullanim Kilavuzu
+# Otel Guvenlik Sistemi V1.12 Kullanim Kilavuzu
 
-Surum: V1  
-Hazirlanma tarihi: 2 Mayis 2026  
-Kapsam: Guvenlik giris-cikis takibi, yonetim panelleri, bildirim, raporlama, kara liste, yedekleme ve kurulum ekranlari.
+Surum: V1.12
+Hazirlanma tarihi: 2 Mayis 2026
+Kapsam: Guvenlik giris-cikis takibi, yonetim panelleri, bildirim, Web Push, WhatsApp entegrasyonu, raporlama, kara liste, yedekleme ve kurulum ekranlari.
 
-Bu kilavuz, otel guvenlik biriminin sistemi gunluk operasyonda nasil kullanacagini ve yoneticilerin V1 icindeki temel ayarlari nereden yapacagini anlatir.
+Bu kilavuz, otel guvenlik biriminin sistemi gunluk operasyonda nasil kullanacagini ve yoneticilerin temel ayarlari nereden yapacagini anlatir.
 
 ## 1. Giris
 
@@ -15,6 +15,8 @@ Sisteme kullanici adi ve sifre ile girilir.
 1. Kullanici adi alanina size verilen kullanici adini yazin.
 2. Sifre alanina sifrenizi yazin.
 3. `Giris Yap` butonuna basin.
+4. Sifrenizi unuttuysaniz `Sifremi Unuttum` ile e-posta adresinize sifirlama linki isteyin.
+5. Giris ekranindaki surum kutusundan son yenilikleri ve tum surum gecmisini gorebilirsiniz.
 
 Yetkiniz hangi panellere aciksa menude yalnizca o panelleri gorursunuz. Kapali bir panele link ile gitmeye calisirsaniz sistem yetki hatasi verir.
 
@@ -27,10 +29,10 @@ Canli panel, guvenlik ekibinin en cok kullanacagi ana ekrandir. Guncel girisler,
 ### Giris Kaydi Olusturma
 
 1. Ad soyad alanina gelen kisinin adini yazin.
-2. Daha once kayitli bir kisi ise sistem oneriler getirir.
+2. Daha once kayitli bir kisi ise sistem oneriler getirir ve bilgiler otomatik doldurulabilir.
 3. Kategori secin.
-4. Gerekirse departman, telefon, plaka ve not alanlarini doldurun.
-5. Randevulu veya randevusuz bilgisini isaretleyin.
+4. Randevulu veya randevusuz bilgisini isaretleyin.
+5. Gerekirse departman, telefon, plaka, firma ve not alanlarini doldurun.
 6. `Giris Kaydet` ile kaydi tamamlayin.
 
 ### Cikis Kaydi Olusturma
@@ -69,7 +71,7 @@ Uyari suresi, kisinin iceride kalabilecegi sureyi ifade eder. Sure doldugunda si
 
 ## 5. Kullanici ve Yetki Yonetimi
 
-Bu ekran sistem kullanicilarini ve rollerini yonetmek icindir.
+Bu ekran sistem kullanicilarini, rollerini, rapor aboneliklerini ve panel yetkilerini yonetmek icindir.
 
 ![Kullanici ve yetki yonetimi](screenshots/v1/05-users-permissions.png)
 
@@ -81,8 +83,12 @@ Bu ekran sistem kullanicilarini ve rollerini yonetmek icindir.
    - Gunluk Rapor Gonder
    - Haftalik Rapor Gonder
    - Aylik Rapor Gonder
-4. `Yonetim ekrani panelleri` bolumunden kullanicinin gorecegi panelleri isaretleyin.
-5. `Kaydet` ile islemi tamamlayin.
+4. `Telefon / Web Push bildirimi` bolumunde kullaniciya cihaz bildirimi yetkisi verin.
+5. Giris ve cikis bildirimlerini ayri ayri secin.
+6. `Yonetim ekrani panelleri` bolumunden kullanicinin gorecegi panelleri isaretleyin.
+7. `Kaydet` ile islemi tamamlayin.
+
+Yeni kullanici acildiginda giris bilgileri ve giris linki e-posta ile gonderilir.
 
 ### Panel Yetkileri
 
@@ -105,12 +111,28 @@ Bu ekranda:
 1. Kanal tipi secilir.
 2. Mail icin SMTP bilgileri girilir.
 3. Telegram icin bot token ve chat bilgileri girilir.
-4. WhatsApp icin servis ayarlari girilir.
-5. Kanal kaydedildikten sonra test gonderimi yapilir.
+4. WhatsApp icin Meta Cloud API secilir.
+5. API versiyonu, kalici Access Token ve WhatsApp Business Account ID yazilir.
+6. `Entegrasyonu Tamamla` butonu Meta Graph API'ye baglanir, bagli numarayi bulur ve Phone Number ID degerini kaydeder.
+7. Baglanti tamamlaninca dogrulanmis ad, gonderici numara, kalite ve platform bilgileri ekranda kontrol edilir.
+8. Kanal kaydedildikten sonra test gonderimi yapilir.
 
 Canli kullanimdan once her kanal mutlaka test edilmelidir.
 
-## 7. Bildirim Kurallari
+## 7. Telefon ve Web Push Bildirimleri
+
+Yetki verilen kullanicilar telefon veya bilgisayar tarayicisindan yeni giris ve cikis bildirimi alabilir.
+
+1. Yonetim > Kullanici ve Yetki Yonetimi ekraninda kullanici icin Web Push bildirimini aktif edin.
+2. Iceri giris ve cikis bildirim tiklerini kullanicinin sorumluluguna gore acin.
+3. Kullanici sisteme giris yaptiginda ekrandaki `Telefon bildirimleri` uyarısından `Izin Ver` secenegine basmalidir.
+4. iPhone veya iPad kullaniliyorsa site once Safari icinden `Paylas > Ana Ekrana Ekle` ile kurulmalidir.
+5. Uygulama ana ekran ikonundan acildiktan sonra tekrar giris yapilip bildirim izni verilmelidir.
+6. Normal Safari sekmesinde acilirsa iPhone Web Push calismaz; sistem kullaniciya ana ekrana ekleme uyarisi gosterir.
+7. Bildirim izni reddedilmisse cihaz veya tarayici ayarlarindan izin tekrar acilmalidir.
+8. Gercek Web Push desteklenmeyen cihazlarda panel acik oldugu surece bildirim yedegi calismaya devam eder.
+
+## 8. Bildirim Kurallari
 
 Bildirim kurallari, hangi olayda kime ve hangi kanaldan bildirim gidecegini belirler.
 
@@ -122,10 +144,9 @@ Ornek kullanim:
 2. Sure asimi durumunda eskalasyon zinciri devreye girer.
 3. Ilk amir cevap vermezse sistem bekleme suresinden sonra ikinci amire gecer.
 4. Son amirde kalacak sekilde zincir devam eder.
+5. Mailde Evet / Hayir butonlari, Telegramda inline butonlar, WhatsApp mesajinda guvenli cevap linkleri kullanilir.
 
-Mail ve Telegram mesajlarinda `Evet` / `Hayir` aksiyonlari kullanilarak durum bildirimi alinabilir.
-
-## 8. Mail Sablonlari
+## 9. Mail Sablonlari
 
 Mail sablonlari, giden e-postalarin daha anlasilir ve standart olmasini saglar.
 
@@ -133,7 +154,7 @@ Mail sablonlari, giden e-postalarin daha anlasilir ve standart olmasini saglar.
 
 Basic kullanicilar icin alan aciklamalari eklenmistir. Sablonlarda degiskenler kullanilarak kisi adi, kategori, departman, giris saati ve sure asimi gibi bilgiler otomatik doldurulur.
 
-## 9. Kayit Listesi ve PDF Gonderimi
+## 10. Kayit Listesi ve PDF Gonderimi
 
 Kayit listesi, gecmis giris-cikis kayitlarini filtrelemek ve raporlamak icindir.
 
@@ -147,7 +168,7 @@ Bu ekrandan:
 4. PDF raporu mail ile gonderebilirsiniz.
 5. Uygun yetki varsa kisi kara listeye alinabilir.
 
-## 10. Planli Raporlar
+## 11. Planli Raporlar
 
 Gunluk, haftalik ve aylik otomatik rapor gonderimleri bu ekrandan yonetilir.
 
@@ -155,7 +176,7 @@ Gunluk, haftalik ve aylik otomatik rapor gonderimleri bu ekrandan yonetilir.
 
 Kullanici kartinda rapor tikleri acildiysa sistem ilgili zamanlarda raporu otomatik gonderir. Manuel rapor gonderimi icin de bu panel kullanilir.
 
-## 11. Kara Liste ve Uyari Listesi
+## 12. Kara Liste ve Uyari Listesi
 
 Kara liste, otele girisi riskli veya dikkat gerektiren kisileri takip etmek icin kullanilir.
 
@@ -170,13 +191,13 @@ Kullanim:
 
 Kayit listesindeki kisiler de tek tusla kara listeye alinabilir.
 
-## 12. Yedekleme
+## 13. Yedekleme
 
 Yedekleme ekrani sistemin dosya ve veritabanini korumak icin kullanilir.
 
 ![Yedekleme](screenshots/v1/12-backups.png)
 
-V1 icinde:
+V1.12 icinde:
 
 1. Otomatik yedekleme ayarlanabilir.
 2. Gunluk yedek mail olarak gonderilebilir.
@@ -185,7 +206,7 @@ V1 icinde:
 
 Yedeklerin calistigi duzenli olarak kontrol edilmelidir.
 
-## 13. Kurulum Sihirbazi
+## 14. Kurulum Sihirbazi
 
 Kurulum sihirbazi, sistemi ilk kez canliya alirken kullanilir.
 
@@ -200,44 +221,45 @@ Kurulumda yalnizca:
 
 Sistem kuruluysa bu ekran kurulumun tamamlandigini gosterir. Canli sistemde kurulum yetkisi sadece yetkili yoneticilerde olmalidir.
 
-## 14. Gunluk Operasyon Akisi
+## 15. Gunluk Operasyon Akisi
 
-Guvenlik gorevlisi icin onerilen gunluk akistem:
+Guvenlik gorevlisi icin onerilen gunluk akis:
 
 1. Sisteme giris yap.
 2. Canli paneli acik tut.
 3. Gelen kisi icin giris kaydi olustur.
 4. Kara liste uyarisi varsa amire bilgi ver.
-5. Kisi ayrildiginda cikis kaydi olustur.
-6. Sure asimi uyarilarini takip et.
+5. Sure asimi uyarilarini takip et.
+6. Kisi ayrildiginda cikis kaydi olustur.
 7. Gun sonunda kayit listesini kontrol et.
 
-## 15. Yonetici Kontrol Listesi
+## 16. Yonetici Kontrol Listesi
 
 Yoneticiler icin temel kontrol listesi:
 
 1. Kategoriler dogru mu?
 2. Departmanlar ve amirler dogru mu?
-3. Kullanici rolleri ve panel yetkileri dogru mu?
-4. Bildirim kanallari test edildi mi?
-5. Eskalasyon zinciri dogru sirada mi?
-6. Mail sablonlari anlasilir mi?
-7. Rapor alicilari dogru mu?
-8. Yedekleme calisiyor mu?
+3. Kullanici rolleri, panel yetkileri ve Web Push tikleri dogru mu?
+4. Mail, Telegram ve WhatsApp kanallari test edildi mi?
+5. WhatsApp Meta baglantisinda dogrulanmis ad ve Phone Number ID gorunuyor mu?
+6. Eskalasyon zinciri dogru sirada mi?
+7. Mail sablonlari anlasilir mi?
+8. Rapor alicilari dogru mu?
+9. Yedekleme calisiyor mu?
 
-## 16. Yetki Mantigi
+## 17. Yetki Mantigi
 
-V1'de yetkiler iki katmanlidir:
+V1.12'de yetkiler iki katmanlidir:
 
 1. Rol yetkisi: Patron, genel mudur, operasyon muduru, gece muduru, guvenlik gibi genel yetki yapisi.
 2. Kullanici panel yetkisi: Kullanici bazinda hangi yonetim panellerinin acik veya kapali oldugu.
 
 Kullanici panel yetkisi kapaliysa, rol genel olarak yetkili olsa bile panel kapatilabilir. Bu nedenle yeni kullanici acarken panel tikleri mutlaka kontrol edilmelidir.
 
-## 17. Onemli Notlar
+## 18. Onemli Notlar
 
 - Canliya alinacak her yeni surum icin surum adi ayrica belirtilmelidir.
-- V1 sonrasindaki gelistirmeler once test ortaminda denenmelidir.
-- DB degisikligi gerekiyorsa canliya gecmeden once ayrica onay alinmalidir.
-- Bildirim, rapor ve yedekleme gibi otomatik islerin calismasi icin sunucuda ilgili cron gorevleri aktif olmalidir.
-
+- DB degisikligi olacaksa canliya almadan once yoneticiden onay alinmalidir.
+- V1.12 sonrasindaki gelistirmeler once test ortaminda denenmelidir.
+- iPhone Web Push icin uygulama mutlaka ana ekran ikonundan acilmalidir.
+- Mail saglayicisi spam reddi verirse uygulama gonderimi denemis olur; SMTP veya mail itibari ayrica kontrol edilmelidir.

@@ -5,6 +5,7 @@ use App\Core\Auth;
 
 $settings = $settings ?? [];
 $users = $users ?? [];
+$unfinishedSuggestionCount = (int) ($unfinishedSuggestionCount ?? 0);
 $canCategories = Auth::can('categories.manage');
 $canDepartments = Auth::can('departments.manage');
 $canUsers = Auth::can('users.manage');
@@ -26,7 +27,7 @@ $canSuggestions = Auth::can('suggestions.manage');
     <p class="muted">Kategori, departman, kullanıcı/yetki ve bildirim kuralı tanımlarını buradan yönetin.</p>
   </div>
   <div class="admin-hero-actions">
-    <a class="primary-action" href="<?= e(route('/admin/guide')) ?>">V1 Kullanım Kılavuzu</a>
+    <a class="primary-action" href="<?= e(route('/admin/guide')) ?>">V1.12 Kullanım Kılavuzu</a>
   </div>
 </section>
 
@@ -37,7 +38,7 @@ $canSuggestions = Auth::can('suggestions.manage');
 <section class="admin-grid" data-admin-sortable>
   <a class="admin-card guide-card-link" href="<?= e(route('/admin/guide')) ?>">
     <span>Yardım</span>
-    <strong>V1 Kullanım Kılavuzu</strong>
+    <strong>V1.12 Kullanım Kılavuzu</strong>
     <small>Ekran görüntüleriyle giriş, canlı panel, rapor, bildirim, yedekleme ve yetki adımları.</small>
   </a>
 
@@ -138,10 +139,17 @@ $canSuggestions = Auth::can('suggestions.manage');
   <?php endif; ?>
 
   <?php if ($canSuggestions): ?>
-    <a class="admin-card" href="<?= e(route('/admin/suggestions')) ?>">
-      <span>Geri bildirim</span>
+    <a class="admin-card feedback-alert-card <?= $unfinishedSuggestionCount > 0 ? 'has-open-feedback' : '' ?>" href="<?= e(route('/admin/suggestions')) ?>">
+      <span><?= $unfinishedSuggestionCount > 0 ? 'Geri bildirim - Bekliyor' : 'Geri bildirim' ?></span>
       <strong>Kullanıcı Önerileri</strong>
-      <small>Personelden gelen fikir, hata bildirimi ve eğitim ihtiyaçlarını takip edin.</small>
+      <?php if ($unfinishedSuggestionCount > 0): ?>
+        <em class="feedback-count"><?= e($unfinishedSuggestionCount) ?></em>
+      <?php endif; ?>
+      <small>
+        <?= $unfinishedSuggestionCount > 0
+          ? e($unfinishedSuggestionCount) . ' tamamlanmamış öneri var. İnceleme bekleyen geri bildirimleri takip edin.'
+          : 'Personelden gelen fikir, hata bildirimi ve eğitim ihtiyaçlarını takip edin.' ?>
+      </small>
     </a>
   <?php endif; ?>
 </section>

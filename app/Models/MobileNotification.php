@@ -10,6 +10,7 @@ use PDO;
 final class MobileNotification
 {
     private static bool $ready = false;
+    private const EVENT_TYPES = ['entry', 'exit', 'department_question', 'department_reminder', 'escalation'];
 
     public function queueVisitEntry(int $visitId): int
     {
@@ -25,7 +26,11 @@ final class MobileNotification
     {
         $this->ensureReady();
 
-        $eventType = $eventType === 'exit' ? 'exit' : 'entry';
+        $eventType = $this->normalizeEventType($eventType);
+        if (!in_array($eventType, ['entry', 'exit'], true)) {
+            return 0;
+        }
+
         $visit = $this->visit($visitId);
         if (!$visit) {
             return 0;
@@ -86,6 +91,56 @@ final class MobileNotification
         return $queued;
     }
 
+    public function queueDirectUserEvent(
+        string $eventType,
+        int $visitId,
+        int $userId,
+        string $title,
+        string $message,
+        ?string $targetUrl = null
+    ): int {
+        $this->ensureReady();
+
+        $eventType = $this->normalizeEventType($eventType);
+        if ($visitId <= 0 || $userId <= 0 || trim($title) === '' || trim($message) === '') {
+            return 0;
+        }
+
+        if (!$this->isUserEligible($userId, $eventType)) {
+            return 0;
+        }
+
+        $stmt = Database::connection()->prepare(
+            'INSERT INTO mobile_notification_logs (
+                user_id,
+                visit_id,
+                title,
+                message,
+                target_url,
+                event_type,
+                status
+             ) VALUES (
+                :user_id,
+                :visit_id,
+                :title,
+                :message,
+                :target_url,
+                :event_type,
+                "queued"
+             )'
+        );
+        $stmt->execute([
+            'user_id' => $userId,
+            'visit_id' => $visitId,
+            'title' => trim($title),
+            'message' => trim($message),
+            'target_url' => $targetUrl ?: '/index.php?route=%2Fdashboard',
+            'event_type' => $eventType,
+        ]);
+
+        return 1;
+    }
+
     public function pullForUser(int $userId, int $limit = 10): array
     {
         $this->ensureReady();
@@ -127,8 +182,9 @@ final class MobileNotification
         $eventSql = '';
         $params = ['visit_id' => $visitId];
         if ($eventType !== null) {
+            $eventType = $this->normalizeEventType($eventType);
             $eventSql = ' AND nl.event_type = :event_type';
-            $params['event_type'] = $eventType === 'exit' ? 'exit' : 'entry';
+            $params['event_type'] = $eventType;
         }
 
         $stmt = Database::connection()->prepare(
@@ -189,6 +245,7 @@ final class MobileNotification
             'mobile_notification_enabled' => 'ALTER TABLE users ADD COLUMN mobile_notification_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER report_monthly_enabled',
             'mobile_notification_entry_enabled' => 'ALTER TABLE users ADD COLUMN mobile_notification_entry_enabled TINYINT(1) NOT NULL DEFAULT 1 AFTER mobile_notification_enabled',
             'mobile_notification_exit_enabled' => 'ALTER TABLE users ADD COLUMN mobile_notification_exit_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER mobile_notification_entry_enabled',
+            'mobile_notification_department_enabled' => 'ALTER TABLE users ADD COLUMN mobile_notification_department_enabled TINYINT(1) NOT NULL DEFAULT 1 AFTER mobile_notification_exit_enabled',
         ];
 
         foreach ($userDefinitions as $column => $sql) {
@@ -206,7 +263,7 @@ final class MobileNotification
                 title VARCHAR(160) NOT NULL,
                 message TEXT NOT NULL,
                 target_url VARCHAR(255) NULL,
-                event_type ENUM("entry", "exit") NOT NULL DEFAULT "entry",
+                event_type ENUM("entry", "exit", "department_question", "department_reminder", "escalation") NOT NULL DEFAULT "entry",
                 status ENUM("queued", "delivered", "read", "skipped") NOT NULL DEFAULT "queued",
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 delivered_at TIMESTAMP NULL,
@@ -227,7 +284,12 @@ final class MobileNotification
 
         $logColumns = $pdo->query('SHOW COLUMNS FROM mobile_notification_logs')->fetchAll(PDO::FETCH_COLUMN);
         if (!in_array('event_type', $logColumns, true)) {
-            $pdo->exec('ALTER TABLE mobile_notification_logs ADD COLUMN event_type ENUM("entry", "exit") NOT NULL DEFAULT "entry" AFTER target_url');
+            $pdo->exec('ALTER TABLE mobile_notification_logs ADD COLUMN event_type ENUM("entry", "exit", "department_question", "department_reminder", "escalation") NOT NULL DEFAULT "entry" AFTER target_url');
+        } else {
+            $eventColumn = $pdo->query('SHOW COLUMNS FROM mobile_notification_logs LIKE "event_type"')->fetch(PDO::FETCH_ASSOC);
+            if ($eventColumn && !str_contains((string) ($eventColumn['Type'] ?? ''), 'department_question')) {
+                $pdo->exec('ALTER TABLE mobile_notification_logs MODIFY COLUMN event_type ENUM("entry", "exit", "department_question", "department_reminder", "escalation") NOT NULL DEFAULT "entry"');
+            }
         }
 
         self::$ready = true;
@@ -257,9 +319,7 @@ final class MobileNotification
 
     private function recipients(string $eventType): array
     {
-        $eventColumn = $eventType === 'exit'
-            ? 'mobile_notification_exit_enabled'
-            : 'mobile_notification_entry_enabled';
+        $eventColumn = $this->eventColumn($eventType);
         $stmt = Database::connection()->query(
             'SELECT id, full_name
              FROM users
@@ -271,6 +331,39 @@ final class MobileNotification
         );
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    private function isUserEligible(int $userId, string $eventType): bool
+    {
+        $eventColumn = $this->eventColumn($eventType);
+        $stmt = Database::connection()->prepare(
+            'SELECT COUNT(*)
+             FROM users
+             WHERE id = :id
+               AND deleted_at IS NULL
+               AND status = "active"
+               AND mobile_notification_enabled = 1
+               AND ' . $eventColumn . ' = 1'
+        );
+        $stmt->execute(['id' => $userId]);
+
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    private function eventColumn(string $eventType): string
+    {
+        return match ($this->normalizeEventType($eventType)) {
+            'exit' => 'mobile_notification_exit_enabled',
+            'department_question', 'department_reminder', 'escalation' => 'mobile_notification_department_enabled',
+            default => 'mobile_notification_entry_enabled',
+        };
+    }
+
+    private function normalizeEventType(string $eventType): string
+    {
+        $eventType = strtolower(trim($eventType));
+
+        return in_array($eventType, self::EVENT_TYPES, true) ? $eventType : 'entry';
     }
 
     private function markDelivered(int $userId, array $ids): void

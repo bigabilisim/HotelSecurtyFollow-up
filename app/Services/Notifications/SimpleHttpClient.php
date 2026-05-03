@@ -6,6 +6,39 @@ namespace App\Services\Notifications;
 
 final class SimpleHttpClient
 {
+    public function getJson(string $url, array $headers = [], int $timeout = 15): array
+    {
+        $headers[] = 'Accept: application/json';
+
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'GET',
+                'header' => implode("\r\n", $headers),
+                'ignore_errors' => true,
+                'timeout' => $timeout,
+            ],
+        ]);
+
+        $body = @file_get_contents($url, false, $context);
+        $statusCode = $this->statusCode($http_response_header ?? []);
+
+        if ($body === false) {
+            return [
+                'ok' => false,
+                'status_code' => $statusCode,
+                'body' => null,
+                'error' => 'HTTP isteği gönderilemedi.',
+            ];
+        }
+
+        return [
+            'ok' => $statusCode >= 200 && $statusCode < 300,
+            'status_code' => $statusCode,
+            'body' => $body,
+            'error' => null,
+        ];
+    }
+
     public function postJson(string $url, array $payload, array $headers = [], int $timeout = 15): array
     {
         $headers[] = 'Content-Type: application/json';
