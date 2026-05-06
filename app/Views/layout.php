@@ -34,6 +34,8 @@ $canOpenAdmin = $user ? Auth::canAny([
     'settings.manage',
 ]) : false;
 $canOpenSetup = $user ? Auth::can('settings.manage') : false;
+$externalMovementsEnabled = (string) ($settings['external_movements.enabled'] ?? '0') === '1';
+$canOpenExternalMovements = $user && $externalMovementsEnabled && Auth::can('external_movements.view');
 $securityAlertType = flash('security_alert_type');
 $securityAlertTitle = flash('security_alert_title');
 $securityAlertMessage = flash('security_alert_message');
@@ -96,6 +98,9 @@ if ($user) {
         <?php if ($user): ?>
           <nav class="topnav" id="main-navigation" data-mobile-nav aria-label="Ana menü">
             <a href="<?= e(route('/dashboard')) ?>">Canlı Panel</a>
+            <?php if ($canOpenExternalMovements): ?>
+              <a href="<?= e(route('/external-movements')) ?>">Dış Görev</a>
+            <?php endif; ?>
             <?php if ($currentRoute === '/dashboard' && Auth::can('dashboard.view_settings')): ?>
               <button
                 class="dashboard-view-toggle"

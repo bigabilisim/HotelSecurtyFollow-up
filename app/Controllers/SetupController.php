@@ -186,6 +186,7 @@ final class SetupController
             'mobile_notification_entry_enabled' => 'TINYINT(1) NOT NULL DEFAULT 1',
             'mobile_notification_exit_enabled' => 'TINYINT(1) NOT NULL DEFAULT 0',
             'mobile_notification_department_enabled' => 'TINYINT(1) NOT NULL DEFAULT 1',
+            'mobile_notification_external_movement_enabled' => 'TINYINT(1) NOT NULL DEFAULT 0',
         ]);
 
         $this->ensureTableColumns($pdo, 'visitor_categories', [
@@ -332,7 +333,7 @@ final class SetupController
                 title VARCHAR(160) NOT NULL,
                 message TEXT NOT NULL,
                 target_url VARCHAR(255) NULL,
-                event_type ENUM("entry", "exit", "department_question", "department_reminder", "escalation") NOT NULL DEFAULT "entry",
+                event_type ENUM("entry", "exit", "department_question", "department_reminder", "escalation", "external_movement_exit") NOT NULL DEFAULT "entry",
                 status ENUM("queued", "delivered", "read", "skipped") NOT NULL DEFAULT "queued",
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 delivered_at TIMESTAMP NULL,
@@ -352,8 +353,8 @@ final class SetupController
         );
 
         $eventColumn = $pdo->query('SHOW COLUMNS FROM mobile_notification_logs LIKE "event_type"')->fetch(PDO::FETCH_ASSOC);
-        if ($eventColumn && !str_contains((string) ($eventColumn['Type'] ?? ''), 'department_question')) {
-            $pdo->exec('ALTER TABLE mobile_notification_logs MODIFY COLUMN event_type ENUM("entry", "exit", "department_question", "department_reminder", "escalation") NOT NULL DEFAULT "entry"');
+        if ($eventColumn && !str_contains((string) ($eventColumn['Type'] ?? ''), 'external_movement_exit')) {
+            $pdo->exec('ALTER TABLE mobile_notification_logs MODIFY COLUMN event_type ENUM("entry", "exit", "department_question", "department_reminder", "escalation", "external_movement_exit") NOT NULL DEFAULT "entry"');
         }
     }
 

@@ -11,6 +11,7 @@
   initMobileMenuToggle();
   initSectionFilterMenus();
   initPersistentFilterForms();
+  initExternalMovementQuickNotes();
   const serviceWorkerRegistration = registerServiceWorker();
 
   if (securityAlert && securityAlertClose) {
@@ -1391,6 +1392,38 @@
       preserveSubmitterValue(form, submitter);
       lockSubmitButtons(form, submitter);
     });
+  }
+
+  function initExternalMovementQuickNotes() {
+    const noteTarget = document.querySelector("[data-external-note-target]");
+    const noteButtons = Array.from(document.querySelectorAll("[data-external-note]"));
+    const plateTarget = document.querySelector("[data-external-plate-target]");
+    const plateButtons = Array.from(document.querySelectorAll("[data-external-plate]"));
+
+    if (noteTarget && noteButtons.length) {
+      noteButtons.forEach(function (button) {
+        button.addEventListener("click", function () {
+          noteTarget.value = button.dataset.externalNote || "";
+          noteButtons.forEach(function (item) {
+            item.classList.toggle("is-selected", item === button);
+          });
+          noteTarget.focus();
+        });
+      });
+    }
+
+    if (plateTarget && plateButtons.length) {
+      plateButtons.forEach(function (button) {
+        button.addEventListener("click", function () {
+          plateTarget.value = button.dataset.externalPlate || "";
+          plateButtons.forEach(function (item) {
+            item.classList.toggle("is-selected", item === button);
+          });
+          plateTarget.dispatchEvent(new Event("input", { bubbles: true }));
+          plateTarget.focus();
+        });
+      });
+    }
   }
 
   function preserveSubmitterValue(form, submitter) {

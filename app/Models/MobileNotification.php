@@ -10,7 +10,8 @@ use PDO;
 final class MobileNotification
 {
     private static bool $ready = false;
-    private const EVENT_TYPES = ['entry', 'exit', 'department_question', 'department_reminder', 'escalation'];
+    private const EVENT_TYPES = ['entry', 'exit', 'department_question', 'department_reminder', 'escalation', 'external_movement_exit'];
+    private const EVENT_TYPE_SQL = 'ENUM("entry", "exit", "department_question", "department_reminder", "escalation", "external_movement_exit")';
 
     public function queueVisitEntry(int $visitId): int
     {
@@ -20,6 +21,71 @@ final class MobileNotification
     public function queueVisitExit(int $visitId): int
     {
         return $this->queueVisitEvent('exit', $visitId);
+    }
+
+    public function queueExternalMovementExit(int $movementId): array
+    {
+        $this->ensureReady();
+        (new ExternalMovement())->ensureTable();
+
+        if ($movementId <= 0) {
+            return ['queued' => 0, 'log_ids' => []];
+        }
+
+        $movement = $this->externalMovement($movementId);
+        if (!$movement) {
+            return ['queued' => 0, 'log_ids' => []];
+        }
+
+        $recipients = $this->recipients('external_movement_exit');
+        if (!$recipients) {
+            return ['queued' => 0, 'log_ids' => []];
+        }
+
+        $title = 'Dış görev çıkışı';
+        $message = trim(implode(' · ', array_filter([
+            (string) ($movement['person_name'] ?? ''),
+            !empty($movement['destination_note']) ? 'Yer: ' . (string) $movement['destination_note'] : '',
+            !empty($movement['vehicle_plate']) ? 'Araç: ' . (string) $movement['vehicle_plate'] : '',
+            $movement['exit_km'] !== null ? 'Çıkış km: ' . (string) $movement['exit_km'] : '',
+        ], static fn (string $part): bool => $part !== '')));
+
+        if ($message === '') {
+            $message = 'Yeni dış görev çıkışı oluşturuldu.';
+        }
+
+        $stmt = Database::connection()->prepare(
+            'INSERT INTO mobile_notification_logs (
+                user_id,
+                visit_id,
+                title,
+                message,
+                target_url,
+                event_type,
+                status
+             ) VALUES (
+                :user_id,
+                NULL,
+                :title,
+                :message,
+                :target_url,
+                "external_movement_exit",
+                "queued"
+             )'
+        );
+
+        $logIds = [];
+        foreach ($recipients as $recipient) {
+            $stmt->execute([
+                'user_id' => (int) $recipient['id'],
+                'title' => $title,
+                'message' => $message,
+                'target_url' => '/index.php?route=%2Fexternal-movements',
+            ]);
+            $logIds[] = (int) Database::connection()->lastInsertId();
+        }
+
+        return ['queued' => count($logIds), 'log_ids' => $logIds];
     }
 
     public function queueVisitEvent(string $eventType, int $visitId): int
@@ -214,6 +280,41 @@ final class MobileNotification
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function queuedLogsByIds(array $ids): array
+    {
+        $this->ensureReady();
+
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn (int $id): bool => $id > 0)));
+        if (!$ids) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = Database::connection()->prepare(
+            'SELECT
+                nl.id,
+                nl.user_id,
+                nl.visit_id,
+                nl.event_type,
+                nl.title,
+                nl.message,
+                nl.target_url,
+                nl.created_at
+             FROM mobile_notification_logs nl
+             INNER JOIN users u ON u.id = nl.user_id
+             WHERE nl.status = "queued"
+               AND nl.deleted_at IS NULL
+               AND nl.id IN (' . $placeholders . ')
+               AND u.status = "active"
+               AND u.deleted_at IS NULL
+               AND u.mobile_notification_enabled = 1
+             ORDER BY nl.created_at ASC, nl.id ASC'
+        );
+        $stmt->execute($ids);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function markDeliveredByLogIds(array $ids): void
     {
         $this->ensureReady();
@@ -246,6 +347,7 @@ final class MobileNotification
             'mobile_notification_entry_enabled' => 'ALTER TABLE users ADD COLUMN mobile_notification_entry_enabled TINYINT(1) NOT NULL DEFAULT 1 AFTER mobile_notification_enabled',
             'mobile_notification_exit_enabled' => 'ALTER TABLE users ADD COLUMN mobile_notification_exit_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER mobile_notification_entry_enabled',
             'mobile_notification_department_enabled' => 'ALTER TABLE users ADD COLUMN mobile_notification_department_enabled TINYINT(1) NOT NULL DEFAULT 1 AFTER mobile_notification_exit_enabled',
+            'mobile_notification_external_movement_enabled' => 'ALTER TABLE users ADD COLUMN mobile_notification_external_movement_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER mobile_notification_department_enabled',
         ];
 
         foreach ($userDefinitions as $column => $sql) {
@@ -263,7 +365,7 @@ final class MobileNotification
                 title VARCHAR(160) NOT NULL,
                 message TEXT NOT NULL,
                 target_url VARCHAR(255) NULL,
-                event_type ENUM("entry", "exit", "department_question", "department_reminder", "escalation") NOT NULL DEFAULT "entry",
+                event_type ' . self::EVENT_TYPE_SQL . ' NOT NULL DEFAULT "entry",
                 status ENUM("queued", "delivered", "read", "skipped") NOT NULL DEFAULT "queued",
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 delivered_at TIMESTAMP NULL,
@@ -284,15 +386,39 @@ final class MobileNotification
 
         $logColumns = $pdo->query('SHOW COLUMNS FROM mobile_notification_logs')->fetchAll(PDO::FETCH_COLUMN);
         if (!in_array('event_type', $logColumns, true)) {
-            $pdo->exec('ALTER TABLE mobile_notification_logs ADD COLUMN event_type ENUM("entry", "exit", "department_question", "department_reminder", "escalation") NOT NULL DEFAULT "entry" AFTER target_url');
+            $pdo->exec('ALTER TABLE mobile_notification_logs ADD COLUMN event_type ' . self::EVENT_TYPE_SQL . ' NOT NULL DEFAULT "entry" AFTER target_url');
         } else {
             $eventColumn = $pdo->query('SHOW COLUMNS FROM mobile_notification_logs LIKE "event_type"')->fetch(PDO::FETCH_ASSOC);
-            if ($eventColumn && !str_contains((string) ($eventColumn['Type'] ?? ''), 'department_question')) {
-                $pdo->exec('ALTER TABLE mobile_notification_logs MODIFY COLUMN event_type ENUM("entry", "exit", "department_question", "department_reminder", "escalation") NOT NULL DEFAULT "entry"');
+            if ($eventColumn && !str_contains((string) ($eventColumn['Type'] ?? ''), 'external_movement_exit')) {
+                $pdo->exec('ALTER TABLE mobile_notification_logs MODIFY COLUMN event_type ' . self::EVENT_TYPE_SQL . ' NOT NULL DEFAULT "entry"');
             }
         }
 
         self::$ready = true;
+    }
+
+    private function externalMovement(int $movementId): ?array
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT
+                em.id,
+                em.person_name,
+                em.vehicle_plate,
+                em.destination_note,
+                em.exit_km,
+                d.name AS department_name,
+                exit_user.full_name AS exit_user_name
+             FROM external_movements em
+             LEFT JOIN departments d ON d.id = em.department_id
+             LEFT JOIN users exit_user ON exit_user.id = em.exit_user_id
+             WHERE em.id = :id
+               AND em.deleted_at IS NULL
+             LIMIT 1'
+        );
+        $stmt->execute(['id' => $movementId]);
+        $movement = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $movement ?: null;
     }
 
     private function visit(int $visitId): ?array
@@ -354,6 +480,7 @@ final class MobileNotification
     {
         return match ($this->normalizeEventType($eventType)) {
             'exit' => 'mobile_notification_exit_enabled',
+            'external_movement_exit' => 'mobile_notification_external_movement_enabled',
             'department_question', 'department_reminder', 'escalation' => 'mobile_notification_department_enabled',
             default => 'mobile_notification_entry_enabled',
         };

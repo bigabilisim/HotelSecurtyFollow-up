@@ -224,9 +224,10 @@ final class AdminController
         (new Settings())->setMany([
             'security.failed_login_alert_enabled' => $enabled ? '1' : '0',
             'security.failed_login_alert_email' => $email,
+            'external_movements.enabled' => isset($_POST['external_movements_enabled']) ? '1' : '0',
         ]);
 
-        flash('success', 'Hatalı şifre uyarı ayarı güncellendi.');
+        flash('success', 'Güvenlik ve modül ayarları güncellendi.');
         redirect('/admin');
     }
 
@@ -510,6 +511,7 @@ final class AdminController
             'mobile_notification_entry_enabled' => isset($_POST['mobile_notification_entry_enabled']),
             'mobile_notification_exit_enabled' => isset($_POST['mobile_notification_exit_enabled']),
             'mobile_notification_department_enabled' => isset($_POST['mobile_notification_department_enabled']),
+            'mobile_notification_external_movement_enabled' => isset($_POST['mobile_notification_external_movement_enabled']),
             'role_ids' => $_POST['role_ids'] ?? [],
             'panel_permissions' => $_POST['panel_permissions'] ?? [],
         ]);
@@ -554,6 +556,7 @@ final class AdminController
             'entry_push',
             'exit_push',
             'department_push',
+            'external_movement_push',
         ], ';');
         fputcsv($output, [
             'Ayşe Operasyon',
@@ -564,6 +567,7 @@ final class AdminController
             '1234',
             'Operasyon Müdürü|Gece Müdürü',
             'active',
+            'evet',
             'evet',
             'evet',
             'evet',
@@ -588,6 +592,7 @@ final class AdminController
             'evet',
             'hayır',
             'evet',
+            'hayır',
         ], ';');
         fclose($output);
         exit;
@@ -696,6 +701,9 @@ final class AdminController
                     'mobile_notification_department_enabled' => array_key_exists('department_push', $row)
                         ? $this->importBoolean((string) $row['department_push'])
                         : ($existingUser ? !empty($existingUser['mobile_notification_department_enabled']) : true),
+                    'mobile_notification_external_movement_enabled' => array_key_exists('external_movement_push', $row)
+                        ? $this->importBoolean((string) $row['external_movement_push'])
+                        : !empty($existingUser['mobile_notification_external_movement_enabled']),
                     'role_ids' => $roleIds,
                 ]);
                 $imported++;
@@ -1408,6 +1416,10 @@ final class AdminController
             'departman_push' => 'department_push',
             'departman_onay_push' => 'department_push',
             'amir_onay_push' => 'department_push',
+            'external_movement_push' => 'external_movement_push',
+            'dis_gorev_push' => 'external_movement_push',
+            'dis_gorev_bildirimi' => 'external_movement_push',
+            'sahil_push' => 'external_movement_push',
         ];
 
         return array_map(function ($header) use ($aliases): string {
@@ -1436,6 +1448,7 @@ final class AdminController
             'entry_push',
             'exit_push',
             'department_push',
+            'external_movement_push',
         ]);
 
         $row = ['_line' => $line];

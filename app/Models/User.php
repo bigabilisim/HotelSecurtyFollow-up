@@ -32,6 +32,7 @@ final class User
                 u.mobile_notification_entry_enabled,
                 u.mobile_notification_exit_enabled,
                 u.mobile_notification_department_enabled,
+                u.mobile_notification_external_movement_enabled,
                 u.status,
                 d.name AS department_name,
                 GROUP_CONCAT(r.name ORDER BY r.name SEPARATOR ", ") AS role_names
@@ -54,6 +55,7 @@ final class User
                 u.mobile_notification_entry_enabled,
                 u.mobile_notification_exit_enabled,
                 u.mobile_notification_department_enabled,
+                u.mobile_notification_external_movement_enabled,
                 u.status,
                 d.name
              ORDER BY u.status, u.full_name'
@@ -228,6 +230,7 @@ final class User
                          mobile_notification_entry_enabled = :mobile_notification_entry_enabled,
                          mobile_notification_exit_enabled = :mobile_notification_exit_enabled,
                          mobile_notification_department_enabled = :mobile_notification_department_enabled,
+                         mobile_notification_external_movement_enabled = :mobile_notification_external_movement_enabled,
                          status = :status' . $passwordSql . '
                      WHERE id = :id AND deleted_at IS NULL'
                 );
@@ -246,6 +249,7 @@ final class User
                     'mobile_notification_entry_enabled' => !empty($data['mobile_notification_entry_enabled']) ? 1 : 0,
                     'mobile_notification_exit_enabled' => !empty($data['mobile_notification_exit_enabled']) ? 1 : 0,
                     'mobile_notification_department_enabled' => !empty($data['mobile_notification_department_enabled']) ? 1 : 0,
+                    'mobile_notification_external_movement_enabled' => !empty($data['mobile_notification_external_movement_enabled']) ? 1 : 0,
                     'status' => $data['status'] ?: 'active',
                 ];
 
@@ -270,7 +274,8 @@ final class User
                         mobile_notification_enabled,
                         mobile_notification_entry_enabled,
                         mobile_notification_exit_enabled,
-                        mobile_notification_department_enabled
+                        mobile_notification_department_enabled,
+                        mobile_notification_external_movement_enabled
                     )
                  VALUES (
                     :department_id,
@@ -286,7 +291,8 @@ final class User
                     :mobile_notification_enabled,
                     :mobile_notification_entry_enabled,
                     :mobile_notification_exit_enabled,
-                    :mobile_notification_department_enabled
+                    :mobile_notification_department_enabled,
+                    :mobile_notification_external_movement_enabled
                  )
                  ON DUPLICATE KEY UPDATE
                     department_id = VALUES(department_id),
@@ -301,6 +307,7 @@ final class User
                     mobile_notification_entry_enabled = VALUES(mobile_notification_entry_enabled),
                     mobile_notification_exit_enabled = VALUES(mobile_notification_exit_enabled),
                     mobile_notification_department_enabled = VALUES(mobile_notification_department_enabled),
+                    mobile_notification_external_movement_enabled = VALUES(mobile_notification_external_movement_enabled),
                     status = VALUES(status),
                     password_hash = VALUES(password_hash),
                     deleted_at = NULL'
@@ -320,6 +327,7 @@ final class User
                     'mobile_notification_entry_enabled' => !empty($data['mobile_notification_entry_enabled']) ? 1 : 0,
                     'mobile_notification_exit_enabled' => !empty($data['mobile_notification_exit_enabled']) ? 1 : 0,
                     'mobile_notification_department_enabled' => !empty($data['mobile_notification_department_enabled']) ? 1 : 0,
+                    'mobile_notification_external_movement_enabled' => !empty($data['mobile_notification_external_movement_enabled']) ? 1 : 0,
                 ]);
 
                 $userId = (int) $pdo->lastInsertId();
@@ -453,6 +461,7 @@ final class User
             'mobile_notification_entry_enabled' => 'ALTER TABLE users ADD COLUMN mobile_notification_entry_enabled TINYINT(1) NOT NULL DEFAULT 1 AFTER mobile_notification_enabled',
             'mobile_notification_exit_enabled' => 'ALTER TABLE users ADD COLUMN mobile_notification_exit_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER mobile_notification_entry_enabled',
             'mobile_notification_department_enabled' => 'ALTER TABLE users ADD COLUMN mobile_notification_department_enabled TINYINT(1) NOT NULL DEFAULT 1 AFTER mobile_notification_exit_enabled',
+            'mobile_notification_external_movement_enabled' => 'ALTER TABLE users ADD COLUMN mobile_notification_external_movement_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER mobile_notification_department_enabled',
         ];
 
         foreach ($definitions as $column => $sql) {
@@ -567,6 +576,9 @@ final class User
             'dashboard.block.stats' => 'dashboard.view',
             'dashboard.block.verifications' => 'dashboard.view',
             'dashboard.view_settings' => 'dashboard.view',
+            'external_movements.view' => 'visits.view_all',
+            'external_movements.create_exit' => 'visits.create_entry',
+            'external_movements.create_return' => 'visits.create_exit',
             'visitors.manage' => 'users.manage',
             'watchlist.manage' => 'users.manage',
             'notification_rules.manage' => 'notifications.manage',

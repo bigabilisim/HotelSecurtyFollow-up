@@ -79,6 +79,9 @@ $buildUserFeatureFlags = static function (array $user): array {
         if (!empty($user['mobile_notification_department_enabled'])) {
             $pushFlags[] = 'departman';
         }
+        if (!empty($user['mobile_notification_external_movement_enabled'])) {
+            $pushFlags[] = 'dış görev';
+        }
         $flags[] = 'Web Push' . ($pushFlags ? ' (' . implode('/', $pushFlags) . ')' : '');
     }
 
@@ -257,6 +260,14 @@ $selectedUserFeatureFlags = $selectedPickerUser ? $buildUserFeatureFlags($select
             <span class="permission-card-copy">
               <strong>Departman onayı</strong>
               <small>Amir onay sorularında telefon/Web Push bildirimi gönderilir.</small>
+            </span>
+          </label>
+          <label class="permission-card user-setting-card <?= !empty($editingUser['mobile_notification_external_movement_enabled']) ? 'is-enabled' : '' ?>">
+            <input name="mobile_notification_external_movement_enabled" type="checkbox" <?= !empty($editingUser['mobile_notification_external_movement_enabled']) ? 'checked' : '' ?>>
+            <span class="permission-card-toggle" aria-hidden="true"></span>
+            <span class="permission-card-copy">
+              <strong>Dış görev bildirimi</strong>
+              <small>Sahil veya dış hizmet için hızlı çıkış oluşturulduğunda bildirim gönderilir.</small>
             </span>
           </label>
         </div>

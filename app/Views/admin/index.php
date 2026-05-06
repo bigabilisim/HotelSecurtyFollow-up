@@ -199,16 +199,31 @@ $canSuggestions = Auth::can('suggestions.manage');
       <?= Csrf::field() ?>
       <div class="section-head">
         <div>
-          <p class="eyebrow">Güvenlik Uyarısı</p>
-          <h1>Hatalı Şifre Denemesi Maili</h1>
-          <p class="muted">Giriş ekranında kullanıcı adı veya şifre hatalı girildiğinde denenen kullanıcı adı, IP, tarih ve cihaz bilgisi bu adrese gönderilir.</p>
+          <p class="eyebrow">Sistem Modülleri</p>
+          <h1>Güvenlik ve Operasyon Ayarları</h1>
+          <p class="muted">Hatalı giriş uyarılarını ve işletmeye göre kullanılacak ek operasyon modüllerini buradan açıp kapatın.</p>
         </div>
       </div>
 
-      <label class="switch-line">
-        <input type="checkbox" name="failed_login_alert_enabled" <?= (string) ($settings['security.failed_login_alert_enabled'] ?? '0') === '1' ? 'checked' : '' ?>>
-        Hatalı giriş denemelerinde mail uyarısı gönder
-      </label>
+      <div class="settings-toggle-grid">
+        <label class="settings-toggle-card">
+          <input type="checkbox" name="failed_login_alert_enabled" <?= (string) ($settings['security.failed_login_alert_enabled'] ?? '0') === '1' ? 'checked' : '' ?>>
+          <span class="permission-card-toggle" aria-hidden="true"></span>
+          <span>
+            <strong>Hatalı giriş mail uyarısı</strong>
+            <small>Yanlış şifre denemelerinde kullanıcı adı, IP, tarih ve cihaz bilgisi e-posta olarak gönderilir.</small>
+          </span>
+        </label>
+
+        <label class="settings-toggle-card is-feature">
+          <input type="checkbox" name="external_movements_enabled" <?= (string) ($settings['external_movements.enabled'] ?? '0') === '1' ? 'checked' : '' ?>>
+          <span class="permission-card-toggle" aria-hidden="true"></span>
+          <span>
+            <strong>Dış Görev Takibi</strong>
+            <small>Sahil veya dış hizmete çıkan personel/araçlar için alt menüde hızlı çıkış-giriş ekranı açılır.</small>
+          </span>
+        </label>
+      </div>
 
       <label>
         Uyarı e-posta adresi
@@ -220,10 +235,10 @@ $canSuggestions = Auth::can('suggestions.manage');
         >
       </label>
 
-      <p class="muted">Mailin çıkması için Kanal Ayarları bölümündeki Mail ayarının aktif ve doğru olması gerekir.</p>
+      <p class="muted">Mailin çıkması için Kanal Ayarları bölümündeki Mail ayarının aktif ve doğru olması gerekir. Dış Görev Takibi için kullanıcıya ayrıca Kullanıcı ve Yetki ekranından dış görev yetkileri verilmelidir.</p>
 
       <div class="form-actions">
-        <button class="primary-action" type="submit">Güvenlik Ayarını Kaydet</button>
+        <button class="primary-action" type="submit">Ayarları Kaydet</button>
       </div>
     </form>
   </section>

@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS users (
   mobile_notification_entry_enabled TINYINT(1) NOT NULL DEFAULT 1,
   mobile_notification_exit_enabled TINYINT(1) NOT NULL DEFAULT 0,
   mobile_notification_department_enabled TINYINT(1) NOT NULL DEFAULT 1,
+  mobile_notification_external_movement_enabled TINYINT(1) NOT NULL DEFAULT 0,
   last_login_at TIMESTAMP NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -359,7 +360,7 @@ CREATE TABLE IF NOT EXISTS mobile_notification_logs (
   title VARCHAR(160) NOT NULL,
   message TEXT NOT NULL,
   target_url VARCHAR(255) NULL,
-  event_type ENUM('entry', 'exit', 'department_question', 'department_reminder', 'escalation') NOT NULL DEFAULT 'entry',
+  event_type ENUM('entry', 'exit', 'department_question', 'department_reminder', 'escalation', 'external_movement_exit') NOT NULL DEFAULT 'entry',
   status ENUM('queued', 'delivered', 'read', 'skipped') NOT NULL DEFAULT 'queued',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   delivered_at TIMESTAMP NULL,
@@ -374,6 +375,42 @@ CREATE TABLE IF NOT EXISTS mobile_notification_logs (
     ON DELETE CASCADE,
   CONSTRAINT fk_mobile_notifications_visit
     FOREIGN KEY (visit_id) REFERENCES visits(id)
+    ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS external_movements (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  department_id BIGINT UNSIGNED NULL,
+  person_name VARCHAR(160) NOT NULL,
+  normalized_person_name VARCHAR(160) NOT NULL,
+  vehicle_plate VARCHAR(40) NULL,
+  destination_note VARCHAR(500) NULL,
+  exit_km INT UNSIGNED NULL,
+  return_km INT UNSIGNED NULL,
+  status ENUM('outside', 'returned', 'cancelled') NOT NULL DEFAULT 'outside',
+  exit_user_id BIGINT UNSIGNED NULL,
+  return_user_id BIGINT UNSIGNED NULL,
+  exit_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  return_at DATETIME NULL,
+  return_note VARCHAR(500) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at TIMESTAMP NULL,
+  PRIMARY KEY (id),
+  KEY idx_external_movements_status_exit (status, exit_at),
+  KEY idx_external_movements_department (department_id),
+  KEY idx_external_movements_person (normalized_person_name),
+  KEY idx_external_movements_vehicle (vehicle_plate),
+  KEY idx_external_movements_exit_user (exit_user_id),
+  KEY idx_external_movements_return_user (return_user_id),
+  CONSTRAINT fk_external_movements_department
+    FOREIGN KEY (department_id) REFERENCES departments(id)
+    ON DELETE SET NULL,
+  CONSTRAINT fk_external_movements_exit_user
+    FOREIGN KEY (exit_user_id) REFERENCES users(id)
+    ON DELETE SET NULL,
+  CONSTRAINT fk_external_movements_return_user
+    FOREIGN KEY (return_user_id) REFERENCES users(id)
     ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

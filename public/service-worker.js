@@ -1,4 +1,4 @@
-const CACHE_NAME = "otel-guvenlik-pwa-v18";
+const CACHE_NAME = "otel-guvenlik-pwa-v20";
 const PRECACHE_URLS = [
   "/offline.html",
   "/assets/app.css",
@@ -82,13 +82,19 @@ self.addEventListener("push", (event) => {
   }
 
   const title = payload.title || "Otel Güvenlik";
+  const actions = Array.isArray(payload.actions)
+    ? payload.actions.filter((action) => action && action.action && action.title).slice(0, 2)
+    : [];
   const options = {
     body: payload.message || "Yeni bildirim var.",
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
+    actions,
+    requireInteraction: payload.require_interaction === true,
     tag: "otel-security-" + (payload.id || Date.now()),
     data: {
-      url: payload.url || "/index.php?route=%2Fdashboard"
+      url: payload.url || "/index.php?route=%2Fdashboard",
+      actionUrls: payload.action_urls || {}
     }
   };
 
@@ -98,24 +104,67 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
+  const action = event.action || "";
+  if (action === "yes" || action === "no") {
+    event.waitUntil(answerDepartmentQuestion(event.notification, action));
+    return;
+  }
+
   const targetUrl = event.notification.data && event.notification.data.url
     ? event.notification.data.url
     : "/index.php?route=%2Fdashboard";
 
-  event.waitUntil(
-    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if ("focus" in client) {
-          client.navigate(targetUrl);
-          return client.focus();
-        }
-      }
-
-      if (clients.openWindow) {
-        return clients.openWindow(targetUrl);
-      }
-
-      return null;
-    })
-  );
+  event.waitUntil(openTargetWindow(targetUrl));
 });
+
+function answerDepartmentQuestion(notification, action) {
+  const actionUrls = notification.data && notification.data.actionUrls
+    ? notification.data.actionUrls
+    : {};
+  const targetUrl = actionUrls[action];
+
+  if (!targetUrl) {
+    return openTargetWindow(notification.data && notification.data.url ? notification.data.url : "/index.php?route=%2Fdashboard");
+  }
+
+  return fetch(targetUrl, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store"
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Cevap kaydedilemedi");
+      }
+
+      return self.registration.showNotification("Cevap kaydedildi", {
+        body: action === "yes"
+          ? "Evet cevabınız güvenlik ekibine iletildi."
+          : "Hayır cevabınız kaydedildi, eskalasyon süreci başlatıldı.",
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
+        tag: (notification.tag || "otel-security-response") + "-answered",
+        data: {
+          url: "/index.php?route=%2Fdashboard"
+        }
+      });
+    })
+    .catch(() => openTargetWindow(targetUrl));
+}
+
+function openTargetWindow(targetUrl) {
+  return clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+    for (const client of clientList) {
+      if ("focus" in client) {
+        client.navigate(targetUrl);
+        return client.focus();
+      }
+    }
+
+    if (clients.openWindow) {
+      return clients.openWindow(targetUrl);
+    }
+
+    return null;
+  });
+}

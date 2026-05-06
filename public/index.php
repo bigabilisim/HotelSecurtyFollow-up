@@ -7,6 +7,7 @@ use App\Controllers\AccountController;
 use App\Controllers\AdminController;
 use App\Controllers\DashboardController;
 use App\Controllers\DepartmentVerificationController;
+use App\Controllers\ExternalMovementController;
 use App\Controllers\MobileNotificationController;
 use App\Controllers\PasswordController;
 use App\Controllers\PwaController;
@@ -56,6 +57,7 @@ try {
             '/verifications/respond' => [DepartmentVerificationController::class, 'respond'],
             '/dashboard' => [DashboardController::class, 'index'],
             '/guide' => [DashboardController::class, 'guide'],
+            '/external-movements' => [ExternalMovementController::class, 'index'],
             '/admin' => [AdminController::class, 'index'],
             '/admin/guide' => [AdminController::class, 'guide'],
             '/admin/suggestions' => [AdminController::class, 'suggestions'],
@@ -92,6 +94,8 @@ try {
             '/visits/entry' => [VisitController::class, 'entry'],
             '/visits/update' => [VisitController::class, 'update'],
             '/visits/exit' => [VisitController::class, 'exit'],
+            '/external-movements/exit' => [ExternalMovementController::class, 'exit'],
+            '/external-movements/return' => [ExternalMovementController::class, 'returnEntry'],
             '/verifications/answer' => [DepartmentVerificationController::class, 'answer'],
             '/admin/categories' => [AdminController::class, 'storeCategory'],
             '/admin/suggestions' => [AdminController::class, 'storeSuggestion'],
@@ -131,6 +135,7 @@ try {
     $routePermissions = [
         'GET' => [
             '/dashboard' => 'dashboard.view',
+            '/external-movements' => 'external_movements.view',
             '/account/password' => 'dashboard.view',
             '/account/preferences' => 'dashboard.view',
             '/mobile-notifications/web-push-config' => 'dashboard.view',
@@ -163,6 +168,8 @@ try {
             '/visits/entry' => 'visits.create_entry',
             '/visits/update' => 'visits.create_entry',
             '/visits/exit' => 'visits.create_exit',
+            '/external-movements/exit' => 'external_movements.create_exit',
+            '/external-movements/return' => 'external_movements.create_return',
             '/verifications/answer' => 'visits.department_verify',
             '/admin/suggestions' => 'suggestions.manage',
             '/admin/ip-blocks' => 'settings.manage',

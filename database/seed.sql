@@ -31,7 +31,10 @@ INSERT INTO permissions (code, name, module, description) VALUES
   ('watchlist.manage', 'Kara / Uyarı Listesi Paneli', 'watchlist', 'Kara liste ve uyarı listesi kayıtlarını yönetir.'),
   ('notification_rules.manage', 'Bildirim Kuralları Paneli', 'notifications', 'Bildirim kuralı panelini yönetir.'),
   ('mail_templates.manage', 'Mail Şablonları Paneli', 'notifications', 'Mail şablonları panelini yönetir.'),
-  ('notification_channels.manage', 'Kanal Ayarları Paneli', 'notifications', 'Mail, Telegram ve WhatsApp kanal ayarlarını yönetir.')
+  ('notification_channels.manage', 'Kanal Ayarları Paneli', 'notifications', 'Mail, Telegram ve WhatsApp kanal ayarlarını yönetir.'),
+  ('external_movements.view', 'Dış Görev Ekranını Gör', 'external_movements', 'Dış görev hareket ekranını görüntüler.'),
+  ('external_movements.create_exit', 'Dış Görev Çıkışı Ver', 'external_movements', 'Dış hizmete çıkan kişi/araç için çıkış kaydı oluşturur.'),
+  ('external_movements.create_return', 'Dış Görev Girişi Ver', 'external_movements', 'Dış görevden dönen kişi/araç için giriş kaydı oluşturur.')
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
   module = VALUES(module),
@@ -54,7 +57,8 @@ JOIN permissions p ON p.code IN (
   'notifications.manage',
   'notification_rules.manage',
   'mail_templates.manage',
-  'notification_channels.manage'
+  'notification_channels.manage',
+  'external_movements.view'
 )
 WHERE r.code = 'owner';
 
@@ -70,7 +74,8 @@ JOIN permissions p ON p.code IN (
   'notification_rules.manage',
   'mail_templates.manage',
   'notification_channels.manage',
-  'departments.manage'
+  'departments.manage',
+  'external_movements.view'
 )
 WHERE r.code = 'general_manager';
 
@@ -86,7 +91,10 @@ JOIN permissions p ON p.code IN (
   'notifications.manage',
   'notification_rules.manage',
   'mail_templates.manage',
-  'notification_channels.manage'
+  'notification_channels.manage',
+  'external_movements.view',
+  'external_movements.create_exit',
+  'external_movements.create_return'
 )
 WHERE r.code = 'operation_manager';
 
@@ -99,7 +107,10 @@ JOIN permissions p ON p.code IN (
   'visits.create_exit',
   'visits.view_all',
   'visits.department_verify',
-  'reports.view'
+  'reports.view',
+  'external_movements.view',
+  'external_movements.create_exit',
+  'external_movements.create_return'
 )
 WHERE r.code = 'night_manager';
 
@@ -120,9 +131,16 @@ JOIN permissions p ON p.code IN (
   'dashboard.view',
   'visits.create_entry',
   'visits.create_exit',
-  'visits.view_all'
+  'visits.view_all',
+  'external_movements.view',
+  'external_movements.create_exit',
+  'external_movements.create_return'
 )
 WHERE r.code = 'security';
+
+INSERT INTO app_settings (setting_key, setting_value, is_encrypted)
+VALUES ('external_movements.enabled', '0', 0)
+ON DUPLICATE KEY UPDATE setting_value = setting_value;
 
 INSERT INTO departments (code, name, email, phone, status) VALUES
   ('GENEL', 'Genel Müdürlük', NULL, NULL, 'active'),
