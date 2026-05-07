@@ -160,6 +160,79 @@ final class ExternalMovement
         return array_slice($notes, 0, $limit);
     }
 
+    public function vehicleKmLookup(int $limit = 250): array
+    {
+        $this->ensureTable();
+
+        $stmt = Database::connection()->prepare(
+            'SELECT id,
+                    vehicle_plate,
+                    exit_km,
+                    return_km,
+                    status,
+                    exit_at,
+                    return_at,
+                    COALESCE(return_at, exit_at) AS last_at
+             FROM external_movements
+             WHERE vehicle_plate IS NOT NULL
+               AND vehicle_plate <> ""
+               AND deleted_at IS NULL
+               AND (return_km IS NOT NULL OR exit_km IS NOT NULL)
+             ORDER BY COALESCE(return_at, exit_at) DESC, id DESC
+             LIMIT :limit'
+        );
+        $stmt->bindValue('limit', max(20, min(500, $limit)), PDO::PARAM_INT);
+        $stmt->execute();
+
+        $lookup = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $entry = $this->presentVehicleKmRow($row);
+            if (!$entry) {
+                continue;
+            }
+
+            $key = (string) $entry['plate_key'];
+            if (isset($lookup[$key])) {
+                continue;
+            }
+
+            $lookup[$key] = $entry;
+        }
+
+        return array_values($lookup);
+    }
+
+    public function latestVehicleKm(string $vehiclePlate): ?array
+    {
+        $this->ensureTable();
+
+        $vehiclePlate = $this->shortText($vehiclePlate, 40);
+        if ($vehiclePlate === '') {
+            return null;
+        }
+
+        $stmt = Database::connection()->prepare(
+            'SELECT id,
+                    vehicle_plate,
+                    exit_km,
+                    return_km,
+                    status,
+                    exit_at,
+                    return_at,
+                    COALESCE(return_at, exit_at) AS last_at
+             FROM external_movements
+             WHERE vehicle_plate = :vehicle_plate
+               AND deleted_at IS NULL
+               AND (return_km IS NOT NULL OR exit_km IS NOT NULL)
+             ORDER BY COALESCE(return_at, exit_at) DESC, id DESC
+             LIMIT 1'
+        );
+        $stmt->execute(['vehicle_plate' => $vehiclePlate]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row ? $this->presentVehicleKmRow($row) : null;
+    }
+
     public function ensureTable(): void
     {
         if (self::$tableEnsured) {
@@ -230,6 +303,53 @@ final class ExternalMovement
         $row['elapsed_minutes'] = isset($row['elapsed_minutes']) ? (int) $row['elapsed_minutes'] : null;
 
         return $row;
+    }
+
+    private function presentVehicleKmRow(array $row): ?array
+    {
+        $plate = trim((string) ($row['vehicle_plate'] ?? ''));
+        $plateKey = $this->compactVehiclePlate($plate);
+        if ($plate === '' || $plateKey === '') {
+            return null;
+        }
+
+        $returnKm = $row['return_km'] !== null && $row['return_km'] !== '' ? (int) $row['return_km'] : null;
+        $exitKm = $row['exit_km'] !== null && $row['exit_km'] !== '' ? (int) $row['exit_km'] : null;
+        $lastKm = $returnKm ?? $exitKm;
+        if ($lastKm === null) {
+            return null;
+        }
+
+        return [
+            'id' => (int) ($row['id'] ?? 0),
+            'vehicle_plate' => $plate,
+            'plate_key' => $plateKey,
+            'last_km' => $lastKm,
+            'last_at' => (string) ($row['last_at'] ?? ''),
+            'status' => (string) ($row['status'] ?? ''),
+            'exit_km' => $exitKm,
+            'return_km' => $returnKm,
+        ];
+    }
+
+    private function compactVehiclePlate(string $plate): string
+    {
+        $plate = strtr($plate, [
+            'ç' => 'C',
+            'Ç' => 'C',
+            'ğ' => 'G',
+            'Ğ' => 'G',
+            'ı' => 'I',
+            'İ' => 'I',
+            'ö' => 'O',
+            'Ö' => 'O',
+            'ş' => 'S',
+            'Ş' => 'S',
+            'ü' => 'U',
+            'Ü' => 'U',
+        ]);
+
+        return strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $plate) ?? '');
     }
 
     private function normalizeName(string $name): string

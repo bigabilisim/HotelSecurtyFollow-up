@@ -2,9 +2,11 @@
   let countdownRows = [];
   let relativeTimes = [];
   const quickCategoryButtons = Array.from(document.querySelectorAll("[data-quick-category-id]"));
+  const quickDepartmentButtons = Array.from(document.querySelectorAll("[data-quick-department-id]"));
   const heartbeatRoot = document.querySelector("[data-dashboard-heartbeat]");
   const entryForm = document.querySelector(".entry-form");
   const categorySelect = document.querySelector("[data-category-select]");
+  const departmentSelect = document.querySelector("[data-department-select]");
   const visitorNameInput = document.querySelector("[data-visitor-name]");
   const autofillStatus = document.querySelector("[data-autofill-status]");
   const visitColumnControls = Array.from(document.querySelectorAll("[data-column-toggle]"));
@@ -70,6 +72,23 @@
   if (categorySelect) {
     categorySelect.addEventListener("change", syncQuickCategorySelection);
     syncQuickCategorySelection();
+  }
+
+  quickDepartmentButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!departmentSelect) {
+        return;
+      }
+
+      departmentSelect.value = button.dataset.quickDepartmentId || "";
+      syncQuickDepartmentSelection();
+      departmentSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  });
+
+  if (departmentSelect) {
+    departmentSelect.addEventListener("change", syncQuickDepartmentSelection);
+    syncQuickDepartmentSelection();
   }
 
   if (visitorNameInput && entryForm) {
@@ -584,6 +603,16 @@
     });
   }
 
+  function syncQuickDepartmentSelection() {
+    if (!departmentSelect) {
+      return;
+    }
+
+    quickDepartmentButtons.forEach((button) => {
+      button.classList.toggle("is-selected", button.dataset.quickDepartmentId === departmentSelect.value);
+    });
+  }
+
   function loadVisitorProfiles() {
     const source = document.querySelector("#visitor-suggestion-data");
     if (!source) {
@@ -642,6 +671,8 @@
     setFormValue("department_id", profile.department_id || "");
     setFormValue("host_name", profile.host_name || "");
     setCheckboxValue("has_appointment", profile.appointment_status === "appointment");
+    syncQuickCategorySelection();
+    syncQuickDepartmentSelection();
 
     const noteInput = entryForm.elements.note;
     if (noteInput && !noteInput.value.trim() && profile.note) {

@@ -2982,6 +2982,59 @@ body.mobile-menu-hidden .dashboard-view-controls {
   box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
 }
 
+.field-caption {
+  color: var(--muted);
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 840;
+  line-height: 1.2;
+}
+
+.quick-department-panel {
+  display: grid;
+  gap: 7px;
+}
+
+.quick-department-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.quick-department-card {
+  align-items: center;
+  background: #f8fbfa;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  display: flex;
+  font-size: 0.82rem;
+  font-weight: 880;
+  justify-content: center;
+  line-height: 1.12;
+  min-height: 46px;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.quick-department-card:nth-child(1) {
+  border-left: 4px solid #0f766e;
+}
+
+.quick-department-card:nth-child(2) {
+  border-left: 4px solid #7c3aed;
+}
+
+.quick-department-card:nth-child(3) {
+  border-left: 4px solid #c36a13;
+}
+
+.quick-department-card:hover,
+.quick-department-card.is-selected {
+  background: #edf7f4;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
 .visit-head,
 .visit-row {
   display: grid;
@@ -3366,6 +3419,30 @@ body.mobile-menu-hidden .dashboard-view-controls {
 .external-return-form {
   display: grid;
   gap: 10px;
+}
+
+.external-km-info {
+  background: #eef7f4;
+  border: 1px solid rgba(15, 118, 110, 0.2);
+  border-left: 4px solid var(--brand);
+  border-radius: 8px;
+  color: #164e45;
+  font-size: 0.78rem;
+  font-weight: 820;
+  line-height: 1.35;
+  margin: 0;
+  padding: 8px 10px;
+}
+
+.external-km-info.is-warning {
+  background: #fff7ed;
+  border-color: rgba(194, 65, 12, 0.28);
+  border-left-color: #c2410c;
+  color: #7c2d12;
+}
+
+.external-return-km-info {
+  grid-column: 1 / -1;
 }
 
 .quick-select-panel {

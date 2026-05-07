@@ -1399,6 +1399,10 @@
     const noteButtons = Array.from(document.querySelectorAll("[data-external-note]"));
     const plateTarget = document.querySelector("[data-external-plate-target]");
     const plateButtons = Array.from(document.querySelectorAll("[data-external-plate]"));
+    const exitKmTarget = document.querySelector("[data-external-exit-km]");
+    const exitKmInfo = document.querySelector("[data-external-km-info]");
+    const returnKmInputs = Array.from(document.querySelectorAll("[data-external-return-km]"));
+    const vehicleKmLookup = loadExternalVehicleKmLookup();
 
     if (noteTarget && noteButtons.length) {
       noteButtons.forEach(function (button) {
@@ -1420,8 +1424,170 @@
             item.classList.toggle("is-selected", item === button);
           });
           plateTarget.dispatchEvent(new Event("input", { bubbles: true }));
+          window.setTimeout(refreshExitKmInfo, 0);
           plateTarget.focus();
         });
+      });
+    }
+
+    if (plateTarget) {
+      plateTarget.addEventListener("input", refreshExitKmInfo);
+      plateTarget.addEventListener("change", refreshExitKmInfo);
+    }
+
+    if (exitKmTarget) {
+      exitKmTarget.addEventListener("input", refreshExitKmInfo);
+      exitKmTarget.addEventListener("change", refreshExitKmInfo);
+    }
+
+    returnKmInputs.forEach(function (input) {
+      input.addEventListener("input", function () {
+        refreshReturnKmInfo(input);
+      });
+      input.addEventListener("change", function () {
+        refreshReturnKmInfo(input);
+      });
+      refreshReturnKmInfo(input);
+    });
+
+    refreshExitKmInfo();
+
+    function refreshExitKmInfo() {
+      if (!plateTarget || !exitKmInfo) {
+        return;
+      }
+
+      const plateKey = normalizeExternalPlate(plateTarget.value || "");
+      if (!plateKey) {
+        showKmInfo(exitKmInfo, "", "");
+        return;
+      }
+
+      const previous = vehicleKmLookup.get(plateKey);
+      if (!previous) {
+        showKmInfo(exitKmInfo, "Bu araç için önceki km kaydı bulunamadı. İlk kayıt olarak takip edilecek.", "info");
+        return;
+      }
+
+      const lastKm = parseNullableInt(previous.last_km);
+      if (lastKm === null) {
+        showKmInfo(exitKmInfo, "", "");
+        return;
+      }
+
+      const exitKm = parseNullableInt(exitKmTarget ? exitKmTarget.value : "");
+      const lastText = formatKm(lastKm);
+      const lastDate = previous.last_at ? " · " + formatExternalDate(previous.last_at) : "";
+      const statusText = previous.status === "outside" ? " · araç şu an dışarıda görünüyor" : "";
+
+      if (exitKm === null) {
+        showKmInfo(exitKmInfo, "Son km kaydı: " + lastText + " km" + lastDate + statusText + ". Çıkış km girince fark hesaplanır.", "info");
+        return;
+      }
+
+      const difference = exitKm - lastKm;
+      if (difference < 0) {
+        showKmInfo(exitKmInfo, "Kontrol edin: Girilen çıkış km, son kayıt olan " + lastText + " km değerinden düşük.", "warning");
+        return;
+      }
+
+      showKmInfo(exitKmInfo, "Son kayıt: " + lastText + " km" + lastDate + ". Bu çıkışa göre fark: " + formatKm(difference) + " km.", "success");
+    }
+
+    function refreshReturnKmInfo(input) {
+      const form = input.closest("form");
+      const info = form ? form.querySelector("[data-external-return-km-info]") : null;
+      if (!info) {
+        return;
+      }
+
+      const exitKm = parseNullableInt(input.dataset.externalExitKmValue);
+      const returnKm = parseNullableInt(input.value);
+      if (exitKm === null || returnKm === null) {
+        showKmInfo(info, "", "");
+        return;
+      }
+
+      const difference = returnKm - exitKm;
+      if (difference < 0) {
+        showKmInfo(info, "Kontrol edin: Giriş km, çıkış km değerinden düşük olamaz.", "warning");
+        return;
+      }
+
+      showKmInfo(info, "Bu dış görevde kullanım: " + formatKm(difference) + " km.", "success");
+    }
+
+    function loadExternalVehicleKmLookup() {
+      const source = document.querySelector("#external-vehicle-km-data");
+      const lookup = new Map();
+      if (!source) {
+        return lookup;
+      }
+
+      try {
+        const rows = JSON.parse(source.textContent || "[]");
+        if (!Array.isArray(rows)) {
+          return lookup;
+        }
+
+        rows.forEach(function (row) {
+          const key = normalizeExternalPlate(row.plate_key || row.vehicle_plate || "");
+          if (key && !lookup.has(key)) {
+            lookup.set(key, row);
+          }
+        });
+      } catch (error) {
+        return lookup;
+      }
+
+      return lookup;
+    }
+
+    function showKmInfo(element, message, variant) {
+      element.textContent = message || "";
+      element.hidden = !message;
+      element.classList.toggle("is-warning", variant === "warning");
+      element.classList.toggle("is-success", variant === "success");
+    }
+
+    function parseNullableInt(value) {
+      const text = String(value || "").trim();
+      if (text === "") {
+        return null;
+      }
+
+      const parsed = Number.parseInt(text, 10);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    function normalizeExternalPlate(value) {
+      return String(value || "")
+        .replace(/[çÇ]/g, "C")
+        .replace(/[ğĞ]/g, "G")
+        .replace(/[ıİ]/g, "I")
+        .replace(/[öÖ]/g, "O")
+        .replace(/[şŞ]/g, "S")
+        .replace(/[üÜ]/g, "U")
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "");
+    }
+
+    function formatKm(value) {
+      return Number(value || 0).toLocaleString("tr-TR");
+    }
+
+    function formatExternalDate(value) {
+      const date = new Date(String(value || "").replace(" ", "T"));
+      if (Number.isNaN(date.getTime())) {
+        return String(value || "");
+      }
+
+      return date.toLocaleString("tr-TR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
       });
     }
   }

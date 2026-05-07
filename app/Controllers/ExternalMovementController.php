@@ -28,6 +28,7 @@ final class ExternalMovementController
             'outsideMovements' => $movementModel->outside(),
             'recentMovements' => $movementModel->recentReturned(),
             'quickNotes' => $movementModel->quickNotes(),
+            'vehicleKmData' => $movementModel->vehicleKmLookup(),
         ]);
     }
 
@@ -43,17 +44,23 @@ final class ExternalMovementController
             redirect('/external-movements');
         }
 
-        $movementId = (new ExternalMovement())->createExit([
+        $movementModel = new ExternalMovement();
+        $vehiclePlate = $this->formatVehiclePlate(trim((string) ($_POST['vehicle_plate'] ?? '')));
+        $exitKm = $this->positiveInt($_POST['exit_km'] ?? null);
+        $previousKm = $vehiclePlate !== '' ? $movementModel->latestVehicleKm($vehiclePlate) : null;
+
+        $movementId = $movementModel->createExit([
             'department_id' => (int) ($_POST['department_id'] ?? 0),
             'person_name' => $personName,
-            'vehicle_plate' => $this->formatVehiclePlate(trim((string) ($_POST['vehicle_plate'] ?? ''))),
-            'exit_km' => $_POST['exit_km'] ?? null,
+            'vehicle_plate' => $vehiclePlate,
+            'exit_km' => $exitKm,
             'destination_note' => trim((string) ($_POST['destination_note'] ?? '')),
         ], (int) Auth::id());
 
         $this->queueExitNotification($movementId);
 
-        flash('success', 'Dış görev çıkışı kaydedildi.');
+        $kmMessage = $this->vehicleKmFlashMessage($previousKm, $exitKm);
+        flash('success', trim('Dış görev çıkışı kaydedildi. ' . $kmMessage));
         redirect('/external-movements');
     }
 
@@ -148,5 +155,31 @@ final class ExternalMovementController
         }
 
         return implode(' ', array_filter([$province, $letters, $numbers], static fn (string $part): bool => $part !== ''));
+    }
+
+    private function positiveInt(mixed $value): ?int
+    {
+        $value = trim((string) $value);
+
+        return $value === '' ? null : max(0, (int) $value);
+    }
+
+    private function vehicleKmFlashMessage(?array $previousKm, ?int $exitKm): string
+    {
+        if (!$previousKm || $exitKm === null) {
+            return '';
+        }
+
+        $lastKm = (int) ($previousKm['last_km'] ?? 0);
+        $difference = $exitKm - $lastKm;
+        $lastKmText = number_format($lastKm, 0, ',', '.');
+
+        if ($difference < 0) {
+            return "Bilgi: Girilen km, aynı aracın son kaydı olan {$lastKmText} km değerinden düşük görünüyor.";
+        }
+
+        $differenceText = number_format($difference, 0, ',', '.');
+
+        return "Bilgi: Aynı aracın son kaydı {$lastKmText} km idi; bu çıkışa göre fark {$differenceText} km.";
     }
 }

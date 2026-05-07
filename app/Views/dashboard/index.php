@@ -8,6 +8,15 @@ $recentActivity = $recentActivity ?? [];
 $categories = $categories ?? [];
 $quickCategories = $quickCategories ?? [];
 $departments = $departments ?? [];
+$quickDepartmentCodes = ['TEKNIK', 'IK', 'SATINALMA'];
+$departmentsByCode = [];
+foreach ($departments as $department) {
+    $departmentsByCode[(string) ($department['code'] ?? '')] = $department;
+}
+$quickDepartments = array_values(array_filter(array_map(
+    static fn (string $code): ?array => $departmentsByCode[$code] ?? null,
+    $quickDepartmentCodes
+)));
 $visitorSuggestions = $visitorSuggestions ?? [];
 $pendingVerifications = $pendingVerifications ?? [];
 $statusLabels = $statusLabels ?? [];
@@ -184,9 +193,26 @@ $visibleDashboardBlocks = array_filter($dashboardBlockAccess, static fn ($allowe
         <input name="company" placeholder="Firma adı">
       </label>
 
+      <?php if ($quickDepartments): ?>
+        <div class="quick-department-panel" aria-label="Geldiği departman hızlı seçimleri">
+          <span class="field-caption">Geldiği Departman Hızlı Seçim</span>
+          <div class="quick-department-grid">
+            <?php foreach ($quickDepartments as $department): ?>
+              <button
+                class="quick-department-card"
+                type="button"
+                data-quick-department-id="<?= e($department['id']) ?>"
+              >
+                <?= e((string) ($department['code'] ?? '') === 'IK' ? 'İK' : $department['name']) ?>
+              </button>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      <?php endif; ?>
+
       <label>
         Geldiği Departman
-        <select name="department_id">
+        <select name="department_id" data-department-select>
           <option value="">Seçiniz</option>
           <?php foreach ($departments as $department): ?>
             <option value="<?= e($department['id']) ?>"><?= e($department['name']) ?></option>

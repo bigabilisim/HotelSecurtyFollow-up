@@ -6,6 +6,7 @@ use App\Core\Csrf;
 $departments = $departments ?? [];
 $outsideMovements = $outsideMovements ?? [];
 $recentMovements = $recentMovements ?? [];
+$vehicleKmData = $vehicleKmData ?? [];
 $quickNotes = $quickNotes ?? ['Sahil'];
 $quickPlates = ['07 L 5984', '07 LJT 93', '07 LMU 84'];
 $canCreateExit = Auth::can('external_movements.create_exit');
@@ -90,9 +91,10 @@ $formatDate = static function (?string $value): string {
           </label>
           <label>
             Aracın çıkış km'sini öğrenin
-            <input name="exit_km" type="number" min="0" inputmode="numeric" placeholder="Km">
+            <input name="exit_km" type="number" min="0" inputmode="numeric" placeholder="Km" data-external-exit-km>
           </label>
         </div>
+        <p class="external-km-info" data-external-km-info hidden></p>
 
         <button class="primary-action" type="submit">Çıkış Ver</button>
       </form>
@@ -135,13 +137,22 @@ $formatDate = static function (?string $value): string {
                 <input type="hidden" name="movement_id" value="<?= e($movement['id']) ?>">
                 <label>
                   Giriş km
-                  <input name="return_km" type="number" min="<?= e($movement['exit_km'] ?? 0) ?>" inputmode="numeric" placeholder="Km">
+                  <input
+                    name="return_km"
+                    type="number"
+                    min="<?= e($movement['exit_km'] ?? 0) ?>"
+                    inputmode="numeric"
+                    placeholder="Km"
+                    data-external-return-km
+                    data-external-exit-km-value="<?= e($movement['exit_km'] ?? '') ?>"
+                  >
                 </label>
                 <label>
                   Dönüş notu
                   <input name="return_note" placeholder="Not">
                 </label>
                 <button class="dark-button" type="submit">Giriş Ver</button>
+                <p class="external-km-info external-return-km-info" data-external-return-km-info hidden></p>
               </form>
             <?php endif; ?>
           </article>
@@ -177,3 +188,5 @@ $formatDate = static function (?string $value): string {
     <?php endif; ?>
   </section>
 </section>
+
+<script type="application/json" id="external-vehicle-km-data"><?= json_encode($vehicleKmData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?: '[]' ?></script>
